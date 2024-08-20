@@ -1,0 +1,38 @@
+\chapter{Dask: a case of study for HPC in the cloud}\label{ch:dask}
+
+totale: 13 pag.
+
+\section{What is Dask?}\label{sec:daskintro}
+
+4 pag.
+
+\begin{itemize}
+  \item presentarlo come tool che ci permette di exploitare il multi-node anche
+    su kubernetes
+  \item Libreria python molto flessibile e aprezzata per il calcolo parallelo
+  \item Interessante /case of study/ per dimostrare che fare HPC nel cloud è possibile
+\end{itemize}
+
+
+\section{Our benchmark}\label{sec:daskbenchmark}
+
+5 pag.
+
+\begin{itemize}
+  \item Simulazione di operazioni comuni su DF e Array
+  \item Scritto perchè non esiste nulla per benchmarkare l'infrastruttura
+  \item 2.1 -> Come lo abbiamo eseguito sui THIN?
+  \item 2.2 -> Come lo abbiamo eseguito su Kubernetes?
+\end{itemize}
+
+\section{Results}\label{sec:daskresults}
+
+4 pag.
+
+\begin{itemize}
+  \item Commenti:
+    \begin{itemize}
+      \item Prestazioni dovrebbero essere simili
+      \item Kubernetes ha un allocazione di risorse più flessibile -> minore networking
+    \end{itemize}
+\end{itemize}

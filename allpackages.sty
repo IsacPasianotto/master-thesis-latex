@@ -1,0 +1,57 @@
+% Typographical rules for the English language
+\usepackage[english]{babel}
+
+% Font-related packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{inconsolata}
+
+% Needed to render the cover
+\usepackage{fancyhdr}
+
+% Figures and subfigures
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+% Improved tables
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% To have appendices appear in the TOC
+\usepackage[titletoc]{appendix}
+
+% Needed for floating images
+\usepackage{float}
+
+% Improved verbatim appearance
+\usepackage{fancyvrb}
+
+% Math stuff
+\usepackage{amsmath}
+\numberwithin{equation}{section}
+
+% Clickable links and references
+\usepackage{hyperref}
+
+% For code sections
+\usepackage{minted}
+
+% biblatex is useful because it autodetects unused references
+% and sorts used ones by occurrence.
+\usepackage{csquotes}
+% \usepackage[sorting=none]{biblatex}
+\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+
+\addbibresource{bib/Bibliography.bib}
+
+% Only needed for placeholder text
+\usepackage{lipsum}
+
+% The content of the thesis is to be input in the appropriate .tex files
+% referenced by the \input{} commands
+
+%*******************************************************
+% Pages' and front cover's settings
+%*******************************************************
+\input{settings/Settings}
+

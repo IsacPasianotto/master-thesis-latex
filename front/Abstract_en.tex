@@ -1,0 +1,209 @@
+\chapter{Abstract, english}
+
+\section*{Introduction}
+
+Since the advent of the first computers, the scientific academy has played a
+pivotal role in driving progress from single mainframes to supercomputers.
+We are now witnessing a transitional phase from a traditional High-performance
+computing (HPC) infrastructure to cloud computing \cite{Surbiryala2019CloudCH}.
+In this thesis, we will investigate one of the critical components
+characterizing this transition, which might represent the main bottleneck in
+porting codes for an HPC environment to this new infrastructure paradigm: the
+container network interface (CNI).
+
+
+Cloud computing is an umbrella term covering different solutions to deliver
+on-demand computing services \cite{rajkumar2011}.
+As such, more details are needed to identify the environment we are working on.
+So, to reduce the field of view of this thesis, we will resort to the
+NIST\cite{nistdef} definition and say that the cloud we are working on is a
+private cloud, where the infrastructure is provisioned for exclusive use by a
+single organization.
+On top of such infrastructure, we provision Kubernetes as the orchestrator of
+choice. The orchestrator acts as a platform as a service (PaaS) and we completed
+it with scientific software in a software-as-a-service (SaaS) fashion.
+Kubernetes shares much in resource management with classical HPC orchestrators
+such as SLURM or PBS, but as we will see along the thesis, alone it is
+insufficient as a replacement and must be extended with additional plugins to
+perform the same functions as HPC orchestrators.
+
+
+A Kubernetes infrastructure is, in fact, very similar in a single-node
+perspective to standard HPC solutions because it shares the same set of Linux
+constructs for resource management \cite{jain2023} However, when moving to distributed
+calculation, we need to add components to scale.
+The first plugin that needs to be added is the CNI above.
+This plugin is responsible for inter-node communication, adding overhead usually
+not encountered when using traditional approaches. Consequently, the choice of
+the CNI is the most important choice when planning a cloud infrastructure that
+aims to substitute the classical HPC. In this thesis, we will first review and
+benchmark different CNIs on different workloads covering the spectrum from
+running classical HPC codes to the new paradigm for data science that uses
+distributed solutions such as Dask\cite{dask2015}, comparing the results with the same codes
+executed on state of the art HPC infrastructure.
+
+% Remove it?
+%%%%%%%%%%%%%%%%%%%%%%%
+% Finally, we will show how to complement our findings with the JupyterHub
+% open-source project, a multi-user version of the Jupyter Notebook, to create a
+% functional and performant platform for data science.
+%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Methods}
+
+In the context of cloud computing, two leading technologies for deploying
+applications are virtual machines and containers.
+A virtual machine (VM) is a software-based representation of a computer system
+that allows applications and operating systems to run in a separate, contained
+environment.
+This technique relies on a hypervisor, a software layer that sits between the
+physical hardware and the VMs.
+The hypervisor's role is to allocate physical resources and emulate a hardware
+environment for the guest VM.
+This guarantees the maximum isolation between the VMs since each VM is entirely
+unaware of the presence of the other VMs.
+However, the hypervisor is also the main limitation of this solution since this
+layer introduces a significant overhead, and the performance of the VMs is lower
+than that of the bare metal hardware.
+For this reason, VMs are usually relegated to contexts where performance is not essential.
+
+\noindent Containers, in contrast, operate on a different principle. They do not require a
+hypervisor, instead sharing the host OS kernel and functioning as isolated
+processes in 'user space' on the host OS. This is made possible thanks to some
+specific Linux kernel features, namely: capabilities, namespaces, and chroot.
+Capabilities allow for the restriction of the privileges of the container,
+namespaces enable the isolation of the resources of the container, and chroot
+allows for the changing of the root directory of the container, effectively
+creating a sandbox-like environment \cite{kerris2021, deochake2023}.
+The main advantage of containers is the performance, since they run directly on
+the host OS, without the hypervisor's overhead, allowing the container to get
+close to the bare metal performance\cite{deochake2023}. For these reasons, which you likely
+already appreciate, containers are the de facto standard in the context of PaaS
+and SaaS solutions. Considering all these factors and the insights shared thus
+far, it becomes evident why the solution proposed in this thesis is based on
+containerization.
+
+Together with the concept of containerization, container orchestrators should be
+mentioned to avoid appearing anachronistic compared to modern standards.
+These tools are responsible for managing the lifecycle of containers, providing
+a platform for automating the deployment, scaling, and operation of application
+containers across clusters of hosts.
+From the user perspective, the orchestrator abstracts the underlying
+infrastructure, allowing focus on the application rather than the hardware and
+providing a consistent environment for the application to run. From the
+infrastructure perspective, the orchestrator manages the scheduling of
+containers, the allocation of resources, the scaling of the application, and the
+monitoring of the application's health, enabling the adoption of containers in a
+highly scalable environment \cite{bookofkubernetes}.
+
+In the open-source realm, a plethora of alternatives exist for each of the
+technologies mentioned above; hence, the selection of the technologies for this
+work was guided by stringent criteria:
+the project's popularity, robust community support, comprehensive documentation,
+active maintenance, and seamless integration with the bare metal infrastructure
+at our disposal in the ORFEO cluster.
+Following these criteria, we choosed the Kubernetes container orchestration
+system and the helm project, as a package manager for Kubernetes. The latter
+covers the definition, installation, and upgrade of applications, the former is
+the core part of the  cloud infrastructure.
+The decision to use Kubernetes was determined following the aformention criteria
+by its status as one of the most popular container orchestration systems and the
+fact that major cloud providers back its development.
+Furthermore, ORFEO already has a Kubernetes cluster in production that can be
+used as a solid example of how to take some technological choices that can grant
+reliability in the long run.
+
+In Kubernetes, multinode clusters are organized by the "node" entity: a physical
+or virtual machine part of the cluster. To allow communication between pods on
+different nodes, kublet (the Kubernetes agent) has the concept of a "container
+network plugin" (CNI), which is software that allows communication between pods
+on different nodes. These plugins are responsible for inserting a virtual
+network interface (e.g., a veth pair) in the pod's network namespaces and making
+any necessary changes to the host's networking configuration (e.g., attaching
+all vets to a bridge) to allow the pod to communicate with other pods on other
+nodes.
+Some of the most popular and widely used CNI plugins are Flannel, Calico, and
+Cilium. Flannel, the simplest, has the advantage of working in any situation out
+of the box; Calico offers great configurability and good performance and allows
+for policy creation. Finally, Cilium claims to be the "High-Performance Cloud
+Native CNI". The cluster of reference ORFEO uses Calico at the moment of this
+writing.
+
+The main goal of this work is to show the differences between the different CNIs
+and assess their performance.
+To do so, we set up a testing infrastructure composed of three nodes
+(computing nodes connected with 25 Gb Ethernet) in the following configuration:
+one control plane and two worker nodes. All nodes have a fresh installation of
+the operating system (Fedora 40), use the CRI-O container runtime interface, and
+run as the container runtime. On top of this configuration, we provisioned
+different CNI plugins for the various tests to assess the network's performance.
+The idea is first to test how the various CNIs work with the basic default
+configuration and choose the one that leads to the best performance for future
+deployment, or if this is not possible because of network policy constraints, to
+know the loss in performance.
+
+\noindent The test we choose to emulate an HPC workload runs the MPI benchmark OSU
+Micro-Benchmarks \cite{osudoc}. We had to add the "mpi operator" to the deployed
+infrastructure to perform such a test. In Kubernetes, an operator is a simple
+and easy to use application-specific controller that extends the functionality
+of the Kubernetes API to create, configure, and manage instances of complex
+stateful applications on behalf of a Kubernetes user \cite{bookofkubernetes}.
+In practice with the "mpi operator" , a pod is spawned in each of the worker
+nodes, with each pod running a container containing the C code of the OSU
+Micro-Benchmarks and communicating with the other pods in the other nodes. The
+latency and bandwidth of the network will be measured to determine the best CNI
+plugin.
+
+Benchmarking a Cloud Computing workflow is a challenging task. First, which
+framework and for this, we chose Dask as it better fits the distributed kind of
+calculation found in modern data science.
+Second, which benchmark? We could not find a well-recognized benchmark in the
+literature and in the various communities of the project to judge the goodness
+of the infrastructure on which the code is running.
+Due to the absence of a suitable benchmark, we followed other ideas that were
+tempted to gain insight into how different parts of the framework performed
+under different conditions. Using these ideas as a base, we developed a new code
+to address this need. This custom code performs diverse operations, covering the
+most prevalent use cases.
+The first section of the code simulates the manipulation of multidimensional
+numeric arrays, while the second does the same but uses data frames as target
+objects. The evaluation is based on the concept of "weak scalability" \cite{Hager2010}.
+This concept means that as the number of computational units (in the specific
+case, cores) increases, the global workload grows, allowing each unit to handle
+a constant duty.
+In the ideal case of perfect scalability, the time should remain constant. At
+the same time, the rate of operations per second performed (MB processed per
+second) should be linearly dependent on the number of cores.
+
+
+\section*{Main results}
+
+
+RISCRIVERLA PERCHÈ  I TEST SONO CAMBIATI SE LI FACCIAMO SULLO STESSO HARDWARE
+
+
+\section*{Conclusion}
+
+In this work, we have analyzed the complexity of a cloud-ready HPC
+infrastructure, individuating the key component that acts as a bottleneck when
+trying to perform demanding tasks: networking.
+After deploying the infrastructure and discussing its advantages, we focused on
+networking. Here, we compared the latency and bandwidth performance of different
+CNIs for Kubernetes infrastructure.
+The main result is that when trying to parallelize the code using mpi, the
+default Cilium installation, thanks to the ebpf dataplane, outperforms all other
+solutions.
+This advantage seems to become marginal when we leave mpi for more modern
+parallelization frameworks, such as Dask, utilized by the data science
+community.
+However, Cillium is still incommensurably slower than the speed expected on an
+ordinary HPC infrastructure where MPI can leverage the kernel verbs and an
+Infiniband infrastructure.
+To solve this problem, one possibility is to extend the test to the Mellanox CNI.
+Furthermore, using Multus to deploy more than one CNI simultaneously could
+enable the utilization of multiple network channels, potentially combining both
+Ethernet and InfiniBand, thereby improving the overall network performance.
+As a next step, we will add a user-friendly interface (JupyterHUB) that will
+allow users to easily exploit all the advantages that the Kubernetes solution
+entails, like standardization and greater code portability, auto-scaling of the
+required resources, and in general, greater flexibility.
