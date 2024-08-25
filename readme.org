@@ -4,35 +4,36 @@
 
 * Road map
 
-- [ ] ~Abstract~ (eng + ita)
+- [-] ~Abstract~ (eng + ita)
   - [ ] *TODO*: riscrivere la parte di commento ai risultati ottenuti
-- [x] ~Introduzione~ - 3 pag.:
+  - [X] Traduzione in italiano
+- [X] ~Introduzione~ - 3 pag.:
   * Review dello stato dell'arte - 3 pag.
   * Dichiarazione degli intenti: portare l'hpc nel cloud
   * Obiettivo in termini NIST: SaaS in cloud privato
   * Letteratura in questo senso? chi ha già fatto cosa di simile?
-- [x] ~Chpt1: Cloud Computing~ *12 pag.*:
-  * [x] Container and VMs (4 pag.)
+- [X] ~Chpt1: Cloud Computing~ *12 pag.*:
+  * [X] Container and VMs (4 pag.)
     - perchè i container ci piacciono
     - portabilità e spectrum solution
     - performance equivalenti al bare-metal
-  * [x] Orchestrator (5 pag.)
+  * [X] Orchestrator (5 pag.)
     - Quali sono le belle features che ci da un orchestrator?  -> Scalability, availability, ...
-  * [x] Kubernetes (3 pag.)
+  * [X] Kubernetes (3 pag.)
     - Come mai abbiamo scelto kubernetes?
     - Docker swarm no perchè... open stack no perchè ...
     - Scelta più popolare, community attiva
     - Standard implementato da tutti
-- [ ] ~Chpt2: CNI~ - *12 pag.*:
-  * [ ] Confronto con l'HPC (2 pag.)
+- [X] ~Chpt2: CNI~ - *12 pag.*:
+  * [X] Confronto con l'HPC (2 pag.)
     - Anche nell'HPC il bottleneck è la comunicazione
-  * [ ] Come funziona la comunicazione node-to-node? (1 pag.)
+  * [X] Come funziona la comunicazione node-to-node? (1 pag.)
     - Ogni CNI inserisce una VETH sul pod
     - Fa le modifiche necessarie all'host per far sì che tutto funzioni bene
-  * [ ] Le CNI utilizzate: dettagli (3+3+3=9 pag). 
-    - [ ] /calico/
-    - [ ] /flannel/
-    - [ ] /cilium/
+  * [X] Le CNI utilizzate: dettagli (3+3+3=9 pag).
+    - [X] /calico/
+    - [X] /flannel/
+    - [X] /cilium/
 - [ ] ~Chpt3: CNI comparison~ - *8 pag.*:
   * [ ] Metodologia (3 pag.)
     - Come ho performato i test?
