@@ -1,66 +1,129 @@
 \chapter{The cloud computing setting}\label{chap:cloudcomputing}
 
 
-\section{Containers and virtual machines: a gentle introduction}\label{sec:chpt1-containers}
+\section{Containers and virtual machines: a short introduction}\label{sec:chpt1-containers}
 
-It is axiomatic that containers have dethroned virtual machines (VMs) as the
-core technology for cloud computing. This shift is not just a passing trend but
-a fundamental change in how cloud infrastructure is conceived and managed.
-Virtually all scientific literature agrees with this statement, including
-sources like \cite{Casalicchio2020TheSI, Bentaleb2021,
-  zhang2018comparativestudycontainersvirtual}. These sources highlight the
-substantial advantages of containers over traditional VMs, cementing their
-status as the de facto standard in modern cloud environments.
-To understand why containerization technologies have become so dominant, we must
-first examine the technological landscape that preceded them.
 
-Virtual machines, which emerged in the late 1990s and early 2000s, represented a
-significant advancement in computing. By allowing multiple operating systems to
-run concurrently on a single physical machine, VMs brought about unprecedented
-flexibility and efficiency in resource utilization. The \textit{hypervisor}
-facilitates this capability being a crucial piece of software that abstracts the
-underlying physical hardware. There are two main types of hypervisors: Type 1
-hypervisors, also known as bare-metal hypervisors, run directly on the physical
-hardware. Type 2 hypervisors, on the other hand, run on top of an existing
-operating system \cite{rodriguezharo-2012}. A schematic representation of the
-two types of hypervisors can be seen in Figure \ref{fig:VM-vs-Container}.
+% Virtual machines, which emerged in the late 1990s and early 2000s, represented
+% a significant advancement in computing. By allowing multiple operating systems
+% to run concurrently on a single physical machine, VMs brought about
+% unprecedented flexibility and efficiency in resource utilization. The
+% \textit{hypervisor} facilitates this capability being a crucial piece of
+% software that abstracts the underlying physical hardware. There are two main
+% types of hypervisors: Type 1 hypervisors, also known as bare-metal hypervisors,
+% run directly on the physical hardware. Type 2 hypervisors, on the other hand,
+% run on top of an existing operating system \cite{rodriguezharo-2012}. A
+% schematic representation of the two types of hypervisors can be seen in Figure
+% \ref{fig:VM-vs-Container}. Virtual machines operate by virtualizing all hardware
+% resources, creating isolated environments where each VM has its own operating
+% system and applications. This architecture ensures strong isolation and security
+% between VMs but comes at the cost of efficiency. Each VM needs to run a
+% full-fledged operating system, leading to substantial overhead in memory and CPU
+% usage. Despite these drawbacks, VMs have been the backbone of data centers and
+% cloud infrastructure for years, providing reliable and secure environments for
+% diverse applications.
+
+Virtual machines were developed starting in the late 1990s and early 2000s.
+Their appearance represented a significant technological advancement in
+computing, allowing multiple operating systems to run concurrently on a single
+physical machine, sharing its resources without interfering. VMs brought about
+unprecedented flexibility, security, and efficiency in resource utilization. The
+critical piece of software that made this possible by abstracting the physical
+hardware is called \textit{hypervisor}. There are two main types of hypervisors:
+Type 1 hypervisors, also known as bare-metal hypervisors, run directly on the
+physical hardware. Type 2 hypervisors, on the other hand, run on top of an
+existing operating system \cite{rodriguezharo-2012}. A schematic representation
+of where the two types of hypervisors fit in a virtualization stack is shown in
+Figure \ref{fig:VM-vs-Container}. 
+
+% Virtual machines operate by virtualizing all hardware resources, creating
+% isolated environments where each VM has its operating system and applications.
+% This architecture ensures strong isolation and security between VMs but comes at
+% the cost of efficiency. Each VM needs to run a full-fledged operating system,
+% leading to substantial overhead in memory and CPU usage. Despite these
+% drawbacks, VMs have been the backbone of data centers and cloud infrastructure
+% for years, providing reliable and secure environments for diverse applications.
+% It is axiomatic that containers have dethroned virtual machines (VMs) as the
+% core technology for cloud computing. This shift is not just a passing trend but
+% a fundamental change in how cloud infrastructure is conceived and managed.
+% Virtually all scientific literature agrees with this statement, including
+% sources like \cite{Casalicchio2020TheSI, Bentaleb2021,
+% zhang2018comparativestudycontainersvirtual}. These sources highlight the
+% substantial advantages of containers over traditional VMs, cementing their
+% status as the de facto standard in modern cloud environments. To understand why
+% containerization technologies have become so dominant, we must first examine the
+% technological landscape that preceded them.
+
 Virtual machines operate by virtualizing all hardware resources, creating
-isolated environments where each VM has its own operating system and
-applications. This architecture ensures strong isolation and security between
-VMs but comes at the cost of efficiency. Each VM needs to run a full-fledged
-operating system, leading to substantial overhead in memory and CPU usage.
-Despite these drawbacks, VMs have been the backbone of data centers and cloud
-infrastructure for years, providing reliable and secure environments for diverse
-applications.
+isolated environments where each VM has its operating system and applications.
+This architecture ensures strong isolation and security between VMs but comes at
+the cost of efficiency. A VM must run a full-fledged operating system, leading
+to substantial overhead in memory and CPU usage. Despite these drawbacks, VMs
+have been the backbone of data centers and cloud infrastructure for years,
+providing reliable and secure environments for diverse applications. Containers
+then appeared to overcome many VMs's limitations and performance bottlenecks.
+Thanks to the advantages they brought, they soon became the core technology for
+cloud computing. This shift has not been a passing trend but a fundamental
+change in how cloud infrastructure is conceived and
+managed\cite{Casalicchio2020TheSI, Bentaleb2021,
+zhang2018comparativestudycontainersvirtual}. The substantial advantages of
+containers over traditional VMs made them the de facto standard in modern cloud
+environments. To understand why containerization technologies have become so
+dominant, we must review their technical differences from those of VMs.
 
-In contrast, containers offer a different approach to achieving similar goals
-but with improved efficiency. Containers are lightweight, portable units that
-bundle an application and its dependencies into a single package.
-Unlike VMs, containers do not require a separate operating system for each
-instance. Instead, they share the host operating system's kernel, drastically
-reducing overhead and allowing for a greater density of applications on a single
-physical machine (see Figure \ref{fig:VM-vs-Container}).
-Under the hood, containers are built on top of the host operating system's
-kernel, which provides the necessary system calls and resources for running
-applications. When a container is started, it runs as a process on the host
-machine, isolated from other containers and the host system.
-Containers achieve their isolation and efficiency through two key technologies:
-\textit{namespaces}, control groups (\textit{cgroups}), and
-\textit{capabilities}.
+% Containers are lightweight, portable units that
+% bundle an application and its dependencies into a single package.
+% Unlike VMs, containers do not require a separate operating system for each
+% instance. Instead, they share the host operating system's kernel, drastically
+% reducing overhead and allowing for a greater density of applications on a single
+% physical machine (see Figure \ref{fig:VM-vs-Container}).
+% Under the hood, containers are built on top of the host operating system's
+% kernel, which provides the necessary system calls and resources for running
+% applications. When a container is started, it runs as a process on the host
+% machine, isolated from other containers and the host system.
+% Containers achieve their isolation and efficiency through two key technologies:
+% \textit{namespaces}, control groups (\textit{cgroups}), and
+% \textit{capabilities}.
 
-Namespaces ensure that each container has its own isolated view of system
-resources such as process trees, network stacks, and file systems. This
-isolation is fundamental to ensuring that containers do not interfere with each
-other, providing a secure environment for each application.
-Cgroups are responsible for limiting and prioritizing resource usage such as
-CPU, memory, and I/O for each container. By managing resources at this granular
-level, cgroups ensure that each container operates efficiently without impacting
-the performance of other containers on the same host.
+% Namespaces ensure that each container has its own isolated view of system
+% resources such as process trees, network stacks, and file systems. This
+% isolation is fundamental to ensuring that containers do not interfere with each
+% other, providing a secure environment for each application.
+% Cgroups are responsible for limiting and prioritizing resource usage such as
+% CPU, memory, and I/O for each container. By managing resources at this granular
+% level, cgroups ensure that each container operates efficiently without impacting
+% the performance of other containers on the same host.
+% Capabilities are a way to control a process's access to system resources. By
+% granting or restricting capabilities, containers can be fine-tuned to have the
+% necessary permissions to perform their tasks without compromising security
+% \cite{kerris2021}.
+
+Containers are lightweight, portable units that bundle an application and its
+dependencies into a single package. Unlike VMs, containers do not require a
+separate operating system for each instance. Instead, they share the host
+operating system's kernel, drastically reducing overhead and allowing for a
+greater density of applications on a single physical machine. On the right side
+of fig.~\ref{fig:VM-vs-Container} is reported a schematic comparison between the
+VM's software stack and a container's software stack. Under the hood, containers
+are built on top of the host operating system's kernel, which provides the
+necessary system calls and resources for running applications. When a container
+is started, it runs as a process on the host machine, isolated from other
+containers and the host system. Containers achieve their isolation and
+efficiency through two key technologies: \textit{namespaces}, control groups
+(\textit{cgroups}), and \textit{capabilities}. Namespaces ensure that each
+container has its own isolated view of system resources such as process trees,
+network stacks, and file systems. This isolation is fundamental to ensuring that
+containers do not interfere with each other, providing a secure environment for
+each application. Cgroups are responsible for limiting and prioritizing resource
+usage such as CPU, memory, and I/O for each container. By managing resources at
+this granular level, cgroups ensure that each container operates efficiently
+without impacting the performance of other containers on the same host.
 Capabilities are a way to control a process's access to system resources. By
 granting or restricting capabilities, containers can be fine-tuned to have the
 necessary permissions to perform their tasks without compromising security
 \cite{kerris2021}.
-
+% TODO we should add a reference for namespace (kerrisk_2013) and a reference for cgroup (like
+% Ovens_2020)
 
 The container architecture is built around bundling an application with all its
 dependencies into a single, portable unit. This unit can run consistently across
@@ -101,68 +164,128 @@ context that sometimes can be confused \cite{walsh2022, huawei2023}:
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{img/chpt1/VM-vs-Container}
-    \caption{Schematic representation of the of how a VM with type 1 hypervisor
-      (left), type 2 hypervisor (center) and a container (right) works.}
+    \caption{From left to right: schematic representation of how a VM with type 1 hypervisor (left), type 2 hypervisor (center), and a container (right) works. In the first two cases, the user application (on top) runs inside a fully-fledged operative system that runs its kernel in a completely isolated environment. The type one hypervisor can be realized with the Linux kernel using the Kernel-based Virtual Machine (KVM)  module. In this case, each virtual processor issues instructions directly to the physical processor, limiting overhead. In the type two hypervisor, instructions are not directly fed to the processor but are pre-processed by other software that, for example, might be responsible for instruction emulations (if running from different architectures). This second type of hypervisor can be realized again with a Linux kernel and a plain Quick Emulator (QEMU). Such a solution also gives the advantage of emulating hardware peripherals not present in the actual host. The QEMU/KVM stack is commonly deployed to obtain the best of both worlds: hardware emulation and almost native CPU performance. The latter case on the right is the container case. Here, the user application runs in an isolated environment (the container) controlled by the container engine. In this case, however, the container shares the main OS, the kernel, and the hardware with all other containers. The user application is for the main OS, a process in its own right with a valid process identification number that can not perform any action outside the environment.}
     \label{fig:VM-vs-Container}
 \end{figure}
 
 
 \subsection{Portability}\label{subsec:chpt1-portability}
 
-In the last decades, the scientific community has encountered the issue commonly
-referred to as "dependency hell." This term describes the challenges associated
-with reproducing scientific experiment results across different machines or
-environments. The problem arises due to the reliance of scientific software on
-various libraries, frameworks, and other components. When these dependencies are
-not adequately managed, compatibility issues, version conflicts, and other
-problems can prevent the software from functioning correctly on different
-systems. This "dependency hell" presents a significant obstacle to scientific
-progress, as it impedes the reproducibility of research results and complicates
-the sharing and collaboration on scientific code. Notably, both technologies
-mentioned above were developed as solutions to this problem.
-When examining the range of solutions adopted by the scientific community over
-the years (as summarized in Figure \ref{fig:solspectrum}), it becomes evident
-why the trade-off containers offer is often considered the most appealing
-\cite{sarusso}.
+% In the last decades, the scientific community has encountered the issue commonly
+% referred to as "dependency hell." This term describes the challenges associated
+% with reproducing scientific experiment results across different machines or
+% environments. The problem arises due to the reliance of scientific software on
+% various libraries, frameworks, and other components. When these dependencies are
+% not adequately managed, compatibility issues, version conflicts, and other
+% problems can prevent the software from functioning correctly on different
+% systems. This "dependency hell" presents a significant obstacle to scientific
+% progress, as it impedes the reproducibility of research results and complicates
+% the sharing and collaboration on scientific code. Notably, both technologies
+% mentioned above were developed as solutions to this problem.
+% When examining the range of solutions adopted by the scientific community over
+% the years (as summarized in Figure \ref{fig:solspectrum}), it becomes evident
+% why the trade-off containers offer is often considered the most appealing
+% \cite{sarusso}.
 
-Starting from the left side of the spectrum (as referenced in Figure
-\ref{fig:solspectrum}), reliance on a well-written requirements file,
-accompanied by suitable documentation from the software developer, represents
-the most straightforward solution. However, this approach is also highly
-error-prone. Additionally, it requires users to manually install all
-dependencies listed in the requirements file, which may not always be possible
-due to conflicts between different versions of the same library or framework or
-if the user lacks the necessary permissions.
+One of the leitmotifs of software management that has not left out the
+scientific community is the issue commonly known as "dependency hell." This
+term,  in science, represents the challenges the researcher must overcome to
+reproduce scientific experiment results across different machines or
+environments. The problem arises due to the reliance of scientific software on
+various libraries, frameworks, and other components that change between
+environments. When these dependencies are not adequately managed, compatibility
+issues, version conflicts, and other problems can prevent the software from
+functioning correctly on different systems. This "dependency hell" presents a
+significant obstacle to scientific progress, as it impedes the reproducibility
+of research results and complicates the sharing and collaboration on scientific
+code. Notably, both technologies mentioned in the previous section were
+developed to solve this problem. When examining the range of solutions adopted
+by the scientific community over the years (as summarized in Figure
+\ref{fig:solspectrum}), it becomes evident why the trade-off containers offer is
+often considered the most appealing \cite{sarusso}.
+
+% Such libraries often come with the convenience that they are incompatible with
+% one another and are tangled together in a way that does not allow for simple
+% replacements.
+
+% Starting from the left side of the spectrum (as referenced in Figure
+% \ref{fig:solspectrum}), reliance on a well-written requirements file,
+% accompanied by suitable documentation from the software developer, represents
+% the most straightforward solution. However, this approach is also highly
+% error-prone. Additionally, it requires users to manually install all
+% dependencies listed in the requirements file, which may not always be possible
+% due to conflicts between different versions of the same library or framework or
+% if the user lacks the necessary permissions.
+
+Figure \ref{fig:solspectrum}  qualitative summarizes how different approaches in
+software distribution reflect on critical metrics that a researcher should
+consider when publishing his code. Starting from the most appealing in an HPC
+context on the left side of the spectrum, we have the typical compilation that
+relies on a well-written requirements file and suitable documentation from the
+software developer. This approach represents the most straightforward solution
+but is also highly error-prone. Additionally, it requires users to manually
+install all dependencies listed in the requirements file, which may not always
+be possible due to conflicts between different versions of the same library or
+framework or if the user lacks the necessary permissions.
+
+% Creating statically linked binaries offers a more convenient solution with
+% minimal effort required from the user. In this case, all dependencies are
+% included within the binary itself, eliminating the need for users to install
+% them separately. Although this approach is practical (with the only limitations
+% being the operating system and processor architecture), it has certain drawbacks
+% that have limited its widespread adoption. Specifically, this method cannot be
+% applied to interpreted languages, including popular ones in scientific computing
+% such as Python, R, and Julia.
 
 Creating statically linked binaries offers a more convenient solution with
-minimal effort required from the user. In this case, all dependencies are
-included within the binary itself, eliminating the need for users to install
-them separately. Although this approach is practical (with the only limitations
-being the operating system and processor architecture), it has certain drawbacks
-that have limited its widespread adoption. Specifically, this method cannot be
-applied to interpreted languages, including popular ones in scientific computing
-such as Python, R, and Julia.
+minimal user effort. In this case, all dependencies are included within the
+binary, eliminating the need for users to install them separately. Although this
+approach is practical (with the only limitations being the operating system and
+processor architecture), it has certain drawbacks that have limited its
+widespread adoption. Specifically, this method cannot be applied to interpreted
+languages (including popular ones in scientific computing such as Python, R, and
+Julia); it tends to produce large files, and the produced binary needs to be
+targeted to a specific architecture.
 
-On the opposite end of the spectrum, virtual machines (VMs) are worth noting.
-The ability to perform hardware emulation, which allows software to run in an
-environment completely isolated from the host machine, represents a technically
-effective solution to the dependency hell problem. However, this approach also
-incurs significant overhead. Consequently, it is seldom mentioned except in
-recent years, as the x86-64 processor architecture has become the de facto
-standard. For typical VMs (without emulation), portability across different
-operating systems is maintained, and once an image is created, it can be easily
-shared and run on different machines. The primary drawback, as discussed in
-paragraph \ref{sec:chpt1-orchestrator} of this chapter, is the overhead in terms
-of memory and CPU usage, which can be substantial when running multiple VMs on
-the same host machine. Additionally, the startup time for a VM is generally much
-longer than that of a container, making VMs less suitable for short-lived tasks
-or applications that require rapid scaling.
+% On the opposite end of the spectrum, virtual machines (VMs) are worth noting.
+% The ability to perform hardware emulation, which allows software to run in an
+% environment completely isolated from the host machine, represents a technically
+% effective solution to the dependency hell problem. However, this approach also
+% incurs significant overhead. Consequently, it is seldom mentioned except in
+% recent years, as the x86-64 processor architecture has become the de facto
+% standard. For typical VMs (without emulation), portability across different
+% operating systems is maintained, and once an image is created, it can be easily
+% shared and run on different machines. The primary drawback, as discussed in
+% paragraph \ref{sec:chpt1-orchestrator} of this chapter, is the overhead in terms
+% of memory and CPU usage, which can be substantial when running multiple VMs on
+% the same host machine. Additionally, the startup time for a VM is generally much
+% longer than that of a container, making VMs less suitable for short-lived tasks
+% or applications that require rapid scaling.
+
+% TODO review this paragraph, it is not very clear
+On the opposite end of the spectrum, there are VMs. In this case, inside the VM,
+we have a completely portable software stack, and we can perform hardware
+emulation, which allows the software to run in an environment different from the
+host machine and mimic the development one. This solution is technically very
+effective against the dependency hell problem. However, this approach also
+incurs significant overhead. The possibility of simulating hardware has seldom
+been mentioned in the last decade as the x86-64 processor architecture has
+become the de facto standard. Thanks to RISC-V and Advanced RISC Machines (ARM),
+it has risen again in popularity. For typical VMs (without emulation),
+portability across different host operating systems is always working, and once
+an image is created, it can be easily shared and run on different machines.
+Stressing the drawbacks, as discussed in paragraph \ref{sec:chpt1-orchestrator}
+of this chapter, the overhead of memory and CPU usage can be substantial when
+running multiple VMs on the same host machine. Additionally, the startup time
+for a VM is generally much longer than that of a container, making VMs less
+suitable for short-lived tasks or applications that require rapid scaling.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{img/chpt1/solutions-spectrum}
-    \caption{Summary of the main advantages and disadvantages of various
-      solutions to the dependency hell problem.}
+    \caption{Qualitative overview of the main advantages and disadvantages of
+      various packaging solutions to distribute software vs critical metrics for
+      the ``dependency hell'' problem to consider when publishing a code}
     \label{fig:solspectrum}
 \end{figure}
 
