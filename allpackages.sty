@@ -11,11 +11,13 @@
 
 % Figures and subfigures
 \usepackage{graphicx}
-\usepackage{subfigure}
+% \usepackage{subfigure}
+\usepackage{subcaption}
 
 % Improved tables
 \usepackage{tabularx}
 \usepackage{longtable}
+\usepackage{booktabs}
 
 % To have appendices appear in the TOC
 \usepackage[titletoc]{appendix}
@@ -39,19 +41,12 @@
 % biblatex is useful because it autodetects unused references
 % and sorts used ones by occurrence.
 \usepackage{csquotes}
-% \usepackage[sorting=none]{biblatex}
-\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+\usepackage[sorting=none, backend=bibtex]{biblatex}
+% \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
 
 \addbibresource{bib/Bibliography.bib}
-
-% Only needed for placeholder text
-\usepackage{lipsum}
-
-% The content of the thesis is to be input in the appropriate .tex files
-% referenced by the \input{} commands
 
 %*******************************************************
 % Pages' and front cover's settings
 %*******************************************************
 \input{settings/Settings}
-
