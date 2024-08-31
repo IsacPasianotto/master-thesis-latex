@@ -1,4 +1,394 @@
-\chapter{About the network performance benchmark}
+\chapter{About the network performance benchmark}\label{appendix:kprod}
 
-Why OSU single node was performed on kprod nodes? 
+In section \ref{subsec:hardware} it was said that \textit{almost} all the
+benchmark provided in this work was performed on the same hardware, referring to
+the three THIN nodes of the ORFEO cluster.
+The only exception is one particular case: the assessment of the network
+performance, done with the MPI operator, in the specific situation where both
+spawned pods are on the same node.
 
+Performing the preliminary tests about how the whole infrastructure reacts to
+launching the code, it was immediately clear that something invalidated the
+final results.
+Here there is reported on the left the results of the \texttt{osu\_latency}
+benchmark performed on the bare metal infrastructure, while on the right, the
+same code runs in two containers on the same node scheduled by
+Kubernetes. The Cilium CNI plugin was considered in the example, but the results
+were identical to those of Flannel and Calico.
+
+
+\begin{minipage}[t]{0.48\textwidth}
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+$ srun mpirun -np 2 ./osu_latency
+
+# OSU MPI Latency Test v7.4
+# Datatype: MPI_CHAR.
+# Size       Avg Latency(us)
+1                       0.38
+2                       0.38
+4                       0.38
+8                       0.38
+16                      0.40
+32                      0.40
+64                      0.41
+128                     0.46
+256                     0.52
+512                     0.67
+1024                    0.77
+2048                    0.87
+4096                    2.12
+8192                    2.43
+16384                   3.10
+32768                   4.16
+65536                   6.47
+131072                 11.08
+262144                 19.96
+524288                 40.73
+1048576                94.13
+2097152               225.72
+4194304               519.54
+\end{minted}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+$ kubectl logs $MPI_POD -n osu
+
+# OSU MPI Latency Test v7.4
+# Datatype: MPI_CHAR.
+# Size       Avg Latency(us)
+1                    4022.08
+2                    4008.08
+4                    4018.13
+8                    4007.18
+16                   4008.03
+32                   4009.93
+64                   4008.78
+128                  5518.38
+256                  4985.38
+512                  4005.33
+1024                 4006.78
+2048                 4330.73
+4096                 5335.28
+8192                 4944.73
+16384                4007.48
+32768                4007.98
+65536               12010.47
+131072              12016.96
+262144              12034.96
+524288              12062.97
+1048576             12180.55
+2097152             13607.63
+4194304             13339.86
+\end{minted}
+\end{minipage}
+\\
+
+
+An overhead was expected, but not of this magnitude. Since more investigation
+was needed at this point, an equivalent benchmark was considered: the Intel IMP
+benchmark \cite{intel-imb}.
+The results of this latter benchmark were absolutely consistent with the
+previous one, hinting that the problem was not in the benchmark itself but
+probably something related to Kubernetes or the MPI-operator.
+
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+  $ srun mpirun -np 2 ./IMB-MPI1 PingPong
+
+# PingPong
+
+#---------------------------------------------------
+# Benchmarking PingPong
+# #processes = 2
+#---------------------------------------------------
+       #bytes #repetitions      t[usec]   Mbytes/sec
+            0         1000      4053.52         0.00
+            1         1000      4040.51         0.00
+            2         1000      4001.50         0.00
+            4         1000      4047.50         0.00
+            8         1000      4049.00         0.00
+           16         1000      4045.00         0.00
+           32         1000      4107.00         0.01
+           64         1000      4145.50         0.02
+          128         1000      4105.50         0.03
+          256         1000      4084.50         0.06
+          512         1000      4120.00         0.12
+         1024         1000      4017.00         0.25
+         2048         1000      3997.00         0.51
+         4096         1000      4133.00         0.99
+         8192         1000      4001.50         2.05
+        16384         1000      4107.00         3.99
+        32768         1000      4138.50         7.92
+        65536          417     12151.10         5.39
+       131072          320     12640.67        10.37
+       262144          160     12009.57        21.83
+       524288           80     12144.29        43.17
+      1048576           40     12002.36        87.36
+      2097152           20     12909.77       162.45
+      4194304           10     13430.44       312.30
+\end{minted}
+
+
+As we can see, the latency of the ping pong test is stuck around 4 ms, while it
+was expected to be less than 1 $\mu$s
+
+In order to support the fact that those results were unreliable, some other
+non-MPI-based tests were performed. In particular, Cilium's integrated
+connectivity test was run to get a rough idea of the network latency between the
+two pods. The results showed an average latency of 43.36$\mu$s where the pods
+are on the same node and 120.12$\mu$s when they are on different nodes. This is
+a more reasonable result for sure.
+
+Another test was performed to prove that the problem was not in the network but
+somewhere in the MPI operator workflow on Kubernetes.
+In this case, two pods were spawned, always both on the same node, using a
+StatefulSet. One of the two pods was used as a listener, and it was left waiting
+for incoming traffic with the command \texttt{nc -l -p 6000 -e cat}.
+The other pod was used to ping the first one using the \texttt{hping3 utility}.
+The latency was slightly higher than obtained with the Cilium but still in a
+reasonable range, about 0.4ms.
+
+
+When analyzing the resource usage when the MPI benchmarks were running, the only
+detail that was noticed that could be related to the problem was the CPU usage.
+The \texttt{core 0} was always at 100\%  usage, while the other cores were
+always idle.
+This was not the case with the same benchmark performed when submitting the job
+to the Slurm scheduler, where the CPU usage was spread among two or more cores.
+One possible advanced hypothesis is that each MPI process, seeing that the other
+one has a different hostname and IP address, acts as if it is the only one on
+the node, starting to use the CPU core 0, entering a sort of busy waiting loop.
+
+This supposition was corroborated by the fact that the same benchmark was
+performed on different nodes, called \texttt{kprod} node. Those nodes are
+virtually identical to the THIN nodes, with the only two exceptions:
+
+
+\begin{itemize}
+  \itemsep0em
+  \item The processors are Intel® Xeon® Silver 4114, 10 cores each, with a
+    frequency of 2.20 GHz.
+  \item The hyper-threading is enabled so that each core can run two threads.
+\end{itemize}
+
+Those nodes are more powerful than the THIN nodes, but the network configuration
+is the same. The results should be comparable since the OSU benchmark is not
+computationally intensive but a network benchmark.
+
+On those nodes, the latency tests were absolutely different; see:
+
+
+\begin{minipage}[t]{0.48\textwidth}
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+$ kubectl logs $OSU_POD -n osu
+
+# OSU MPI Latency Test v7.4
+# Datatype: MPI_CHAR.
+# Size       Avg Latency(us)
+1                      17.24
+2                      17.17
+4                      17.21
+8                      17.32
+16                     17.26
+32                     17.22
+64                     17.27
+128                    17.24
+256                    17.31
+512                    17.41
+1024                   17.50
+2048                   17.57
+4096                   18.38
+8192                   19.17
+16384                  26.01
+32768                  42.20
+65536                  83.16
+131072                 99.12
+262144                139.67
+524288                208.26
+1048576               368.92
+2097152               666.18
+4194304              1475.56
+\end{minted}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+  $ kubectl logs $IMB_POD -n osu
+
+#---------------------------------------------------
+# Benchmarking PingPong
+# #processes = 2
+#---------------------------------------------------
+       #bytes #repetitions      t[usec]   Mbytes/sec
+            0         1000        19.01         0.00
+            1         1000        19.44         0.05
+            2         1000        19.16         0.10
+            4         1000        19.15         0.21
+            8         1000        19.17         0.42
+           16         1000        19.17         0.83
+           32         1000        19.22         1.66
+           64         1000        19.21         3.33
+          128         1000        19.21         6.66
+          256         1000        19.27        13.29
+          512         1000        19.36        26.45
+         1024         1000        19.50        52.50
+         2048         1000        19.33       105.93
+         4096         1000        20.31       201.67
+         8192         1000        21.61       379.03
+        16384         1000        28.10       583.15
+        32768         1000        44.84       730.79
+        65536          640        95.52       686.10
+       131072          320       113.92      1150.58
+       262144          160       154.27      1699.29
+       524288           80       230.93      2270.32
+      1048576           40       402.65      2604.18
+      2097152           20       735.06      2853.05
+      4194304           10      1622.56      2585.00
+\end{minted}
+\end{minipage}
+\\
+
+As it is possible to see, the results are more than reasonable.
+Moreover, the results performed spawning the pods on different nodes were
+consistent with all the results obtained executing the code in the THIN
+partition.
+On the left, the results of the \texttt{osu\_latency} and \texttt{osu\_bw}
+benchmarks performed on a couple of \texttt{kprod} nodes, while on the right,
+the results of the same executable run on the THIN nodes.
+
+
+\begin{minipage}[t]{0.48\textwidth}
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+$ kubectl logs $LATENCY_POD -n osu
+
+# OSU MPI Latency Test v7.4
+# Datatype: MPI_CHAR.
+# Size       Avg Latency(us)
+1                      51.87
+2                      51.46
+4                      51.32
+8                      51.26
+16                     51.31
+32                     51.41
+64                     51.44
+128                    51.61
+256                    52.11
+512                    52.22
+1024                   54.22
+2048                   60.95
+4096                   61.65
+8192                   64.61
+16384                  70.72
+32768                 104.09
+65536                 246.00
+131072                339.67
+262144                431.30
+524288                651.31
+1048576              1112.78
+2097152              2028.37
+4194304              3873.53
+
+$ kubectl logs $BW_POD -n osu
+
+# OSU MPI Bandwidth Test v7.4
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1                       0.11
+2                       0.37
+4                       0.78
+8                       1.52
+16                      3.38
+32                      6.41
+64                     11.94
+128                    22.47
+256                    39.35
+512                    75.61
+1024                  142.69
+2048                  267.08
+4096                  449.94
+8192                  656.54
+16384                 879.78
+32768                 952.36
+65536                1003.82
+131072               1442.00
+262144               1475.80
+524288               1416.40
+1048576              1424.10
+2097152              1424.90
+4194304              1431.04
+\end{minted}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\begin{minted}[fontsize=\footnotesize,style=bw]{bash}
+$ kubectl logs $LATENCY_POD -n osu
+
+# OSU MPI Latency Test v7.4
+# Datatype: MPI_CHAR.
+# Size       Avg Latency(us)
+1                      39.10
+2                      39.09
+4                      39.04
+8                      39.03
+16                     39.00
+32                     39.04
+64                     39.80
+128                    39.81
+256                    39.87
+512                    40.13
+1024                   42.06
+2048                   79.00
+4096                   73.27
+8192                   77.51
+16384                  83.86
+32768                 121.64
+65536                 279.27
+131072                394.77
+262144                600.20
+524288                955.09
+1048576              1741.38
+2097152              3308.94
+4194304              6484.20
+
+$ kubectl logs $BW_POD -n osu
+
+# OSU MPI Bandwidth Test v7.4
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1                       0.10
+2                       0.20
+4                       0.44
+8                       0.89
+16                      1.79
+32                      3.59
+64                      7.14
+128                    14.26
+256                    27.72
+512                    56.17
+1024                  114.33
+2048                  216.02
+4096                  428.76
+8192                  718.41
+16384                1064.59
+32768                1098.54
+65536                 992.30
+131072               1431.63
+262144               1660.79
+524288               1754.12
+1048576              1800.05
+2097152              1824.78
+4194304              1842.85
+\end{minted}
+\end{minipage}
+\\
+
+The results are similar enough to impute the better performance of the THIN node
+to the fact that the CPU is more powerful. The most important aspect was that
+the differences in CNI plugin performance were consistent among the two
+different nodes: a CNi that outperforms the others on a given benchmark on kprod
+nodes does the same on the THIN nodes.
+
+For all that is said in this appendix, all the network performance assessments
+done regarding the communication of two pods spawned on the same node were
+conducted on the \texttt{kprod} nodes instead of the THIN nodes, like all the
+other measurements of this thesis.

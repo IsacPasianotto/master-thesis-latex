@@ -34,20 +34,20 @@
     - [X] /calico/
     - [X] /flannel/
     - [X] /cilium/
-- [ ] ~Chpt3: CNI comparison~ - *8 pag.*:
-  * [ ] Metodologia (3 pag.)
+- [X] ~Chpt3: CNI comparison~ - *8 pag.*:
+  * [X] Metodologia (3 pag.)
     - Come ho performato i test?
     - spawno un pod per nodo
     - ogni pod ha un container con gli eseguibili mpi
     - usato l'MPI operator
     - Benchmark utilizzato: l'OSU benchmark
-  * [ ] Misurazioni (3 pag.)
+  * [X] Misurazioni (3 pag.)
     - Caratteristiche tecniche dei nodi
     - Caratteristiche tecniche del cluster kubernetes
     - Come abbiamo installato tutto
     - Abbiamo fatto runnare tutto su ethernet per poterlo comparare
     - Risultati
-  * [ ] Commenti (2 pag.)
+  * [X] Commenti (2 pag.)
     - Commenti ai risultati
 - [ ] ~Chpt4: Dask, a case of study~ - *13 pag.*:
   * [ ] What is dask (4 pag.)
