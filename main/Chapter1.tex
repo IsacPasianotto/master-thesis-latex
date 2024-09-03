@@ -263,6 +263,7 @@ targeted to a specific architecture.
 % or applications that require rapid scaling.
 
 % TODO review this paragraph, it is not very clear
+% What question does it try to answer?
 On the opposite end of the spectrum, there are VMs. In this case, inside the VM,
 we have a completely portable software stack, and we can perform hardware
 emulation, which allows the software to run in an environment different from the
@@ -292,54 +293,95 @@ suitable for short-lived tasks or applications that require rapid scaling.
 
 \subsection{Container performance}
 
+% As previously mentioned, containers offer greater flexibility and portability
+% and represent a more efficient solution for extracting maximum performance from
+% the underlying hardware.
+% It is now essential to provide a detailed analysis of
+% the performance aspects of containers, as this topic has garnered significant
+% attention in the specialized literature.
+% The performance of containers has been extensively studied, with particular
+% emphasis on how they compare to traditional virtualization techniques, such as
+% those utilizing hypervisors.
+% Noteworthy contributions in this area include the works of Sharma et al.
+% \cite{Sharma2016}, Deochake et al. \cite{deochake2023}, and Li et al.
+% \cite{Li2023}.
+
 As previously mentioned, containers offer greater flexibility and portability
-and represent a more efficient solution for extracting maximum performance from
-the underlying hardware.
-It is now essential to provide a detailed analysis of
-the performance aspects of containers, as this topic has garnered significant
-attention in the specialized literature.
-The performance of containers has been extensively studied, with particular
-emphasis on how they compare to traditional virtualization techniques, such as
-those utilizing hypervisors.
-Noteworthy contributions in this area include the works of Sharma et al.
-\cite{Sharma2016}, Deochake et al. \cite{deochake2023}, and Li et al.
-\cite{Li2023}.
+and represent a more efficient solution than VMs to extract maximum performance
+from the underlying hardware. Container's performance has been extensively
+studied \cite{Li2023,Sharma2016,Felter_2015,deochake2023}, and all these
+studies agree that containers, while offering a lesser degree of isolation,
+allow for almost bare metal performance with limitations only due to the
+introduced networking stack and storage(in exotic configurations).
 
-These studies consistently demonstrate that the virtualization process employed
-by hypervisors introduces considerable performance overhead.
-This overhead arises due to hypervisors needing to emulate hardware and manage
-virtual machines, thereby adding layers of abstraction between the application
-and the physical resources.
-The added complexity leads to slower I/O operations, increased latency, and
-reduced throughput, ultimately resulting in performance degradation.
-In contrast, containerization, which operates at the operating system level,
-circumvents much of this overhead by sharing the host OS kernel.
-Containers provide isolated environments for applications while allowing direct
-access to underlying hardware resources. Consequently, containerized
-applications' performance closely approximates native, bare-metal solutions,
-with differences being negligible in most cases.
-This efficiency renders containers particularly attractive for high-performance
+% These studies consistently demonstrate that the virtualization process employed
+% by hypervisors introduces considerable performance overhead. This overhead
+% arises due to hypervisors needing to emulate hardware and manage virtual
+% machines, thereby adding layers of abstraction between the application and the
+% physical resources. The added complexity leads to slower I/O operations,
+% increased latency, and reduced throughput, ultimately resulting in performance
+% degradation. In contrast, containerization, which operates at the operating
+% system level, circumvents much of this overhead by sharing the host OS kernel.
+% Containers provide isolated environments for applications while allowing direct
+% access to underlying hardware resources. Consequently, containerized
+% applications' performance closely approximates native, bare-metal solutions,
+% with differences being negligible in most cases. This efficiency renders
+% containers particularly attractive for high-performance computing and other
+% resource-intensive applications, where minimizing overhead is critical.
+
+The virtualization process employed by hypervisors such as the common
+KVM\cite{Kivity_2007} has been observed to introduce considerable performance
+overhead. This overhead arises due to hypervisors needing to emulate hardware
+and manage virtual machines, thereby adding layers of abstraction between the
+application and the physical resources. Furthermore, the added complexity leads
+to slower I/O operations, increased latency, and reduced throughput, ultimately
+resulting in performance degradation. In contrast, containerization, which
+operates at the operating system level, circumvents much of this overhead by
+sharing the host OS kernel. Containers provide isolated environments for
+applications while allowing direct access to underlying hardware resources.
+Consequently, containerized applications' performance closely approximates
+native, bare-metal solutions, with negligible differences in most cases.  This
+efficiency renders containers particularly attractive for high-performance
 computing and other resource-intensive applications, where minimizing overhead
-is critical.
+is critical. It is worth noting, however how the landscape of virtualization is
+rapidly evolving and  how recent hypervisors, such as Firecracker from Amazon,
+were able to reduce their overhead considerably and reach almost container
+performance\cite{Li_2023}
 
-Another significant study by Mohammadi et al. \cite{Mohammadi2018} explores the
-feasibility of utilizing cloud computing environments to perform workloads
-typically associated with high-performance computing (HPC) facilities.
-Notably, the widely recognized LINPACK benchmark, used to measure the
-performance of supercomputers, was executed on a cloud infrastructure with
-highly satisfactory results.
+% TODO If we want to cite Mohammadi2018 we have to put it more in a context like
+% people are trying HPC in the cloud and are having successes.
+% A comparison by Mohammadi \emph{et al.}~\cite{Mohammadi2018} explores the
+% feasibility of utilizing cloud computing environments to perform workloads
+% typically associated with high-performance computing (HPC) facilities. Notably,
+% the widely recognized LINPACK benchmark, used to measure the performance of
+% supercomputers, was executed on a cloud infrastructure with highly satisfactory
+% results.
 
-It is important to note that all the studies mentioned earlier focus on
-assessing the computational performance of containers. While this is a crucial
-factor, there are other considerations when evaluating the suitability of cloud
-infrastructure as a candidate for distributed scientific computing.
-As will be discussed in subsequent chapters (see Chapters \ref{chpt:cni} and
-\ref{chpt:osu}), network and I/O performance are also critical aspects that
-require careful evaluation. These two factors have become increasingly
-significant and are now recognized as primary bottlenecks in modern
-infrastructure.
 
-\section{Orchestrator: using a container-based setting in the modern era}\label{sec:chpt1-orchestrator}
+% It is important to note that all the studies mentioned earlier focus on
+% assessing the computational performance of containers. While this is a crucial
+% factor, there are other considerations when evaluating the suitability of cloud
+% infrastructure as a candidate for distributed scientific computing. As will be
+% discussed in subsequent chapters (see chapters \ref{chpt:cni} and
+% \ref{chpt:osu}), network and I/O performance are also critical aspects that
+% require careful evaluation. These two factors have become increasingly
+% significant and are now recognized as primary bottlenecks in modern
+% infrastructure.
+
+Many studies mentioned earlier mainly focused on assessing containers'
+computational performance, comparing it to bare metal and VMs. While this is a
+crucial factor, there are other considerations when evaluating the suitability
+of cloud infrastructure as a candidate for distributed scientific computing. As
+will be discussed in subsequent chapters (see chapters \ref{chpt:cni} and
+\ref{chpt:osu}), network and I/O performance are aspects that require careful
+evaluation. Indeed, they have been recognized to be the bottleneck in highly
+parallel data processes such as those adopted in data science and machine
+learning models with billions of parameters where chip-to-chip communication is
+the main limitation \cite{Pope_2023}.
+% TODO the citation is very weak
+
+\section{Orchestrator: using a container-based setting in the modern era}
+\label{sec:chpt1-orchestrator}
 
 %% 5 pagine
 
@@ -351,15 +393,25 @@ infrastructure.
 %%   • RBAC (Role Based Access Control)
 
 
-With the advent of containerization technologies and the rise of cloud
-computing, the need for efficient management of containers has become
-increasingly apparent.
-This requirement has given rise to a new class of tools known as container
-orchestrators. These orchestrators play a crucial role in automating
-containerized applications' deployment, scaling, and management, thereby
-simplifying the complex container management processes \cite{Rodriguez2018}.
-They make deploying, operating, and maintaining intricate applications in
-dynamic cloud environments easier.
+% With the advent of containerization technologies and the rise of cloud
+% computing, the need for efficient management of containers has become
+% increasingly apparent.
+% This requirement has given rise to a new class of tools known as container
+% orchestrators. These orchestrators play a crucial role in automating
+% containerized applications' deployment, scaling, and management, thereby
+% simplifying the complex container management processes \cite{Rodriguez2018}.
+% They make deploying, operating, and maintaining intricate applications in
+% dynamic cloud environments easier.
+
+One practical reason HPC workloads were never moved to the cloud was the lack of
+monitoring and scheduling  tools. With containerization technologies and the
+rise of cloud computing, the need for efficient management of containers has
+become increasingly apparent. This requirement has given rise to a new class of
+tools known as container orchestrators. These orchestrators play a crucial role
+in automating containerized applications' deployment, scaling, and management,
+thereby simplifying the complex container management processes
+\cite{Rodriguez2018}. They make it easier to deploy, operate, and maintain
+intricate applications in dynamic cloud environments.
 
 As is often the case in the open-source ecosystem, numerous solutions have been
 developed to address this need.
@@ -575,10 +627,10 @@ This approach simplifies the management of access permissions in large,
 distributed environments and enhances security by ensuring that users and
 services can only perform actions they are explicitly permitted to.
 
-In particular in Kubernetes, the orchestrator that is going to be used in this
-work (see section \ref{sec:chpt1-kubernetes}) RBAC is a core feature that
-involves thee main components: \textit{Roles}, \textit{Role Bindings}, and
-\textit{Subjects} \cite{kdoc-rbac}:
+As an example in Kubernetes, the orchestrator of choice for this work (sec.
+\ref{sec:chpt1-kubernetes}), RBAC is a core feature that involves three main
+components: \textit{Roles}, \textit{Role Bindings}, and \textit{Subjects}
+\cite{kdoc-rbac}:
 
 \begin{itemize}
   \itemsep0em
@@ -603,9 +655,7 @@ involves thee main components: \textit{Roles}, \textit{Role Bindings}, and
      within the orchestration environment.
 \end{itemize}
 
-\section{Kubernetes: the orchestrator of choice}\label{sec:chpt1-kubernetes}
-
-\subsection{Why Kubernetes?}
+\section{Kubernetes}\label{sec:chpt1-kubernetes}
 
 As previously stated, in the years, many container orchestrators have been
 deployed and proposed.
@@ -615,14 +665,13 @@ In the preliminary steps of this work, Docker Swarm, OpenStack, and Kubernetes
 were considered possible choices.
 
 Docker swarm \cite{Singh2023} is a container orchestrator developed by Docker
-that is integrated into the Docker Engine (at least for the Linux version).
-It is designed to be simple to use and easy to set up, but it lacks some of the
-advanced features provided by other orchestrators.
-In particular, the most severe limitation, which alone was enough to discard it,
-is that, at least at the moment this thesis is composed (2024), it does not
-support multi-node installation. Since the stated aim is to reproduce HPC in a
-cloud-fashion environment, performing distributed computation to guarantee
-horizontal scaling is necessary.
+that is integrated into the Docker Engine (at least for the Linux version).  It
+is designed to be simple to use and easy to set up, but it lacks some of the
+advanced features provided by other orchestrators.  In particular, the most
+severe limitation, which alone was enough to discard it, is that it does not
+support multi-node installation at the moment of this writing. Since the stated
+aim is to reproduce HPC in a cloud-fashion environment, performing distributed
+computation to guarantee horizontal scaling is necessary.
 
 The second option, OpenStack, is a mature project initially developed by the
 OpenStack Foundation, which is now part of the Open Infrastructure Foundation.
