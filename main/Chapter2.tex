@@ -2,42 +2,70 @@
 
 % Circa 12 pagine
 
-\section{Network: the bottleneck in the modern computation}\label{sec:network}
+\label{sec:network}
+
+% Since its first appearance, distributed architectures have played a vital role
+% in scientific computing. The main idea behind this approach is that if a single
+% computing unit is not powerful enough to solve a problem, multiple units can do
+% it.
+% The reason why this approach is so successful and popular lies in the fact that
+% Performing horizontal scaling is always cheaper than vertical scaling.
+% However, this approach has a significant drawback: since the computation is
+% now distributed, it may be necessary, mainly if the computations performed by
+% the different units are not independent, to exchange data between them. This
+% introduces a new problem: the network used to perform this inter-node
+% communication.
 
 Since its first appearance, distributed architectures have played a vital role
 in scientific computing. The main idea behind this approach is that if a single
 computing unit is not powerful enough to solve a problem, multiple units can do
-it.
-The reason why this approach is so successful and popular lies in the fact that
-Performing horizontal scaling is always cheaper than vertical scaling.
-However, this approach has a significant drawback: since the computation is
-now distributed, it may be necessary, mainly if the computations performed by
-the different units are not independent, to exchange data between them. This
-introduces a new problem: the network used to perform this inter-node
-communication.
+it. The reason why this approach is so successful lies in the fact that
+Performing horizontal scaling is cheaper than vertical scaling and can go beyond
+its limitations. However, a distributed approach has a significant drawback:
+data has to be moved between different units through additional dedicated
+infrastructure. When everything is distributed, we perform data processing on
+different nodes from those where we store it. Furthermore, if the computations
+are not independent, it may be necessary to exchange data between nodes
+dedicated to the computation. All this additional data motion introduces a new
+problem: the network used to perform this inter-node communication.
 
-This fact may seem trivial, but it is not. Performing this kind of
-operation has a cost, measurable in terms of the significant complexity of the
-infrastructure and, obviously, time. At the beginning of the
-distributed computing era, this was not a big problem since the order of
-magnitude of the time needed to perform this kind of operation was irrelevant
-compared to the time needed to perform the computation.
-However, in the last decade, the situation has started to change. The amount of
-processed data has increased exponentially. However, more importantly, the
-progress in the HPC hardware industry has delivered massive computational power,
-making the time needed to perform the computation itself much smaller.
 
-In particular, thanks also to the significant adoption of hardware accelerators,
-the time needed to perform the computation has decreased much faster than the
-time needed to perform the inter-node communication, making the latter a real
-bottleneck in modern computation.
-This is a well-known problem, and many vendors have started developing
-faster network technologies, like Infiniband, omni-path, Gigabit Ethernet, and
-so on, to solve this problem. However, this may be not enough.
-This is a well-known problem for anyone who has ever worked with distributed
-systems, since scaling profilation as the one shown in figure \ref{fig:scaling}
-are becoming more and more common.
+% This fact may seem trivial, but it is not. Performing this kind of
+% operation has a cost, measurable in terms of the significant complexity of the
+% infrastructure and, obviously, time. At the beginning of the
+% distributed computing era, this was not a big problem since the order of
+% magnitude of the time needed to perform this kind of operation was irrelevant
+% compared to the time needed to perform the computation.
+% However, in the last decade, the situation has started to change. The amount of
+% processed data has increased exponentially. However, more importantly, the
+% progress in the HPC hardware industry has delivered massive computational power,
+% making the time needed to perform the computation itself much smaller.
 
+% In particular, thanks also to the significant adoption of hardware accelerators,
+% the time needed to perform the computation has decreased much faster than the
+% time needed to perform the inter-node communication, making the latter a real
+% bottleneck in modern computation.
+% This is a well-known problem, and many vendors have started developing
+% faster network technologies, like Infiniband, omni-path, Gigabit Ethernet, and
+% so on, to solve this problem. However, this may be not enough.
+% This is a well-known problem for anyone who has ever worked with distributed
+% systems, since scaling profilation as the one shown in figure \ref{fig:scaling}
+% are becoming more and more common.
+
+Moving data has a measurable cost in terms of the significant complexity and
+time required for infrastructure. At the beginning of the distributed computing
+era, data motion was not a problem since the order of magnitude of time needed
+to perform this kind of operation was negligible compared to the time needed to
+perform the computation. However, the situation has changed in the last decade,
+and we are now in the opposite. Thanks to the significant adoption of hardware
+accelerators, the time needed to perform the computation has fallen. We are at a
+point where dedicated hardware can process data much faster than the time it
+takes to fetch it, making the latter the bottleneck of modern computation. This
+bottleneck is well-known, and many vendors have started developing faster
+network technologies, like Infiniband, omni-path, Slingshot, and Ultra Ethernet,
+to solve this problem. However, more is needed because we are approaching a
+situation where anyone working with distributed systems starts to encounter
+scaling profilations like the one sketched in figure \ref{fig:scaling}.
 
 \begin{figure}[h]
   \centering
@@ -55,46 +83,84 @@ are becoming more and more common.
 \end{figure}
 
 
-Other than the physical limitation imposed by the network technology itself,
-there is another problem that may arise: the software stack used to perform the
-communication. Even the fastest network devices will be slowed up by the
-overhead introduced by the operating system itself and any other software
-responsible for managing those devices.
-Libraries like MPI used to perform communication in HPC, try to optimize this
-step as much as possible, and vendors like Mellanox, Intel, and Cray have started
-to develop their own libraries.
+% Other than the physical limitation imposed by the network technology itself,
+% there is another problem that may arise: the software stack used to perform the
+% communication. Even the fastest network devices will be slowed up by the
+% overhead introduced by the operating system itself and any other software
+% responsible for managing those devices.
+% Libraries like MPI used to perform communication in HPC, try to optimize this
+% step as much as possible, and vendors like Mellanox, Intel, and Cray have started
+% to develop their own libraries.
 
-All this introduction was made to make clear to the reader why all the traction of the
-Container Networking Interface Plugin (CNI Plugin) in this and the following
-chapter is so important and extensive. As will be shown in detail, the CNI is
-a crucial part of the Kubernetes ecosystem, and it is responsible for managing
-the network of the pods.
-Those plugin provides an abstraction layer between the Kubernetes network and
-the underlying network infrastructure, but at the same time, they introduces the
-most significant overhead in the network communication in a Kubernetes cluster.
-Knowing in the details how they work is essential to understand how to optimize
-the network communication in a Kubernetes cluster to not come too early to the
-conclusion as in the past (see section \ref{sec:intro-literature-review}) that
-using a cloud native infrastructure for HPC is not feasible.
-In the very last years some of the most adopted CNIs have been tested in the
-scientific literature, like the ones presented by Kapočius (2020)
-\cite{Kapoius2020}, Kang et al. (2020) \cite{Kang2021}, and finally, the most
-recent and comprehensive survey by Koukis et al. (2024) \cite{Koukis2024}.
+% All this introduction was made to make clear to the reader why all the traction of the
+% Container Networking Interface Plugin (CNI Plugin) in this and the following
+% chapter is so important and extensive. As will be shown in detail, the CNI is
+% a crucial part of the Kubernetes ecosystem, and it is responsible for managing
+% the network of the pods.
+% Those plugin provides an abstraction layer between the Kubernetes network and
+% the underlying network infrastructure, but at the same time, they introduces the
+% most significant overhead in the network communication in a Kubernetes cluster.
+% Knowing in the details how they work is essential to understand how to optimize
+% the network communication in a Kubernetes cluster to not come too early to the
+% conclusion as in the past (see section \ref{sec:intro-literature-review}) that
+% using a cloud native infrastructure for HPC is not feasible.
+% In the very last years some of the most adopted CNIs have been tested in the
+% scientific literature, like the ones presented by Kapočius (2020)
+% \cite{Kapoius2020}, Kang et al. (2020) \cite{Kang2021}, and finally, the most
+% recent and comprehensive survey by Koukis et al. (2024) \cite{Koukis2024}.
 
-As it should be reasonable to expect, in all the previous studies there is not a
-"\textit{ideal CNI plugin}" which just outperform all the others in every
-possible scenario. The choice of the CNI plugin to use in a Kubernetes cluster
-may depend on many factors, like the hardware used, the specific requirements of
-the application, and so on. For this reason, according to the authors of this
-thesis, should be considered a good practice to perform an assessment of how the
-Kubernetes cluster react to the different CNIs, like the one presented in the
-chapter \ref{chpt:osu} \textit{"CNIs comparison and assessment"} and make the
-proper consideration to do a wise choice.
-For the specific case of the ORFEO cluster used for the thesis presented, the
-considered CNIs plugin evaluated are Calico, Flannel, and Cilium. The first two
-for the very promising results in \cite{Koukis2024} (in particular Cilium claims
-to be an high performance CNI) and the latter one for its adoption due to its
-simplicity and flexibility.
+Other than the physical limitation imposed by the network technology, another
+problem arises with the software stack used to perform the communication. Even
+the fastest network devices will be slowed down by the overhead introduced by
+the operating system and any other software responsible for managing those
+devices.  In the case of HPC, no abstraction needs to be introduced, so
+libraries responsible for communication can interface directly with the kernel.
+This allows for the development of low-level, highly optimized solutions like
+message-passing interface (MPI) implementations. However, this is not feasible
+in the cloud paradigm, where a layer of abstraction is always needed. Often,
+such a layer takes the name of "Container Networking Interface" Plugin (CNI
+Plugin). As will be shown in detail, the CNI is a crucial part of the Kubernetes
+ecosystem, and it is responsible for managing the network of the pods. The CNI
+plugin provides the network layer to the Kubernetes orchestrator and interfaces
+it with the underlying network infrastructure. While this paradigm is needed, if
+not to enable networking within the orchestrated containers, it introduces the
+most significant overhead in network communications within the cluster.
+
+Through the last decade, the CNI panorama has been very active, and performances
+have been one of the main selling points, along with features of all these
+software. This interest led to a rich literature in performance analysis
+\cite{Kapoius2020,Kang2021, Qi_2021,Koukis2024}. All those studies focused on
+performances typical for a web application, such as HTTP connection and SSH
+session, seldom expanding their studies in the lower layers typically consumed
+by HPC workflows. The main takeaway message is that there is no "\textit{ideal
+CNI plugin}" that outperforms all the others in every possible scenario. The
+choice of the CNI plugin to use in a Kubernetes cluster may depend on many
+factors, such as the hardware used, the specific requirements of the
+application, and the time the managing team can dedicate to setup and
+maintenance. For this reason, we think that it should be good practice to
+perform an assessment of how the Kubernetes cluster behaves to the different
+CNIs, like the one presented in the chapter \ref{chpt:osu}, and make the proper
+consideration before deploying a production environment. For the specific case
+of the ORFEO cluster used for the thesis presented, the CNI plugins considered
+and evaluated are Calico, Flannel, and Cilium. The first two were chosen for the
+encouraging performance results shown by Koukis \emp{et al.}~\cite{Koukis2024},
+and the latter for its simplicity and flexibility.
+
+% As it should be reasonable to expect, in all the previous studies there is not a
+% "\textit{ideal CNI plugin}" which just outperform all the others in every
+% possible scenario. The choice of the CNI plugin to use in a Kubernetes cluster
+% may depend on many factors, like the hardware used, the specific requirements of
+% the application, and so on. For this reason, according to the authors of this
+% thesis, should be considered a good practice to perform an assessment of how the
+% Kubernetes cluster react to the different CNIs, like the one presented in the
+% chapter \ref{chpt:osu} \textit{"CNIs comparison and assessment"} and make the
+% proper consideration to do a wise choice.
+% For the specific case of the ORFEO cluster used for the thesis presented, the
+% considered CNIs plugin evaluated are Calico, Flannel, and Cilium. The first two
+% for the very promising results in \cite{Koukis2024} (in particular Cilium claims
+% to be an high performance CNI) and the latter one for its adoption due to its
+% simplicity and flexibility.
+
 
 \section{Node-to-node communication in Kubernetes}\label{sec:node2node}
 
