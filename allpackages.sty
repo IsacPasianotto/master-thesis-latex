@@ -1,5 +1,16 @@
 % Typographical rules for the English language
-\usepackage[english]{babel}
+\usepackage[UKenglish]{babel}
+
+% Clickable links and references
+% \usepackage{hyperref}
+\usepackage[pdfa, pdfversion=1.7]{hyperref}
+
+
+
+% Ensure that the final file is in PDF/A as requested
+% by the university
+\usepackage[a-1b]{pdfx}
+% \usepackage{fontspec}
 
 % Font-related packages
 \usepackage[utf8]{inputenc}
@@ -32,21 +43,16 @@
 \usepackage{amsmath}
 \numberwithin{equation}{section}
 
-% Clickable links and references
-\usepackage{hyperref}
-
 % For code sections
 \usepackage{minted}
+
+\usepackage{colorprofiles}
 
 % biblatex is useful because it autodetects unused references
 % and sorts used ones by occurrence.
 \usepackage{csquotes}
 \usepackage[sorting=none, backend=bibtex]{biblatex}
 % \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
-
 \addbibresource{bib/Bibliography.bib}
 
-%*******************************************************
-% Pages' and front cover's settings
-%*******************************************************
 \input{settings/Settings}

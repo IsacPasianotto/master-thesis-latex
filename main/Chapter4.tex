@@ -1,31 +1,407 @@
 \chapter{Dask: a case of study for HPC in the cloud}\label{chpt:dask}
 
-totale: 13 pag.
+% totale: 13 pag.
 
 \section{What is Dask?}\label{sec:daskintro}
 
-4 pag.
+In the last two decades, the Python programming language has gained more and
+more consensus among the scientific community, becoming the de-facto standard in
+many academic applications and research.
+Consequently, many dedicated libraries have been developed to support the
+researcher in their daily work.
+Even though Python is a very high-level language, it is not natively designed to
+exploit the full potential of modern hardware, such as multi-core CPUs or
+distributed systems. This is why all the most popular libraries for scientific
+computing are so important: they provide the user with a high-level interface to
+exploit the hardware's full potential, speeding up computation. Still, under the
+hood, they are usually implemented in more low-level languages to achieve the
+best performance.
+
+Dask \cite{dask2015} is one of these libraries, first presented by Matthew
+Rockling in 2015. What makes it unique is that, despite the majority of those
+libraries aiming to exploit the full potential of a single machine, relying on
+the multi-core architecture, Dask adds the ability to scale on multiple nodes,
+keeping all the capabilities of efficiently using the multi threads parallelism.
+
+This is not the only library that provides this feature; one notable example is
+\texttt{mpi4py} \cite{Dalcin2021}, which is a Python wrapper for the MPI.
+However, Dask meets the needs of the scientific community, as it provides a more
+high-level interface without the need to deal with the complexity of the
+communication aspect, which the library handles by itself at the possible cost
+of a performance drop.
+
+Dask is a very flexible library, and it is designed to be used in a wide range
+of applications, from simple data manipulation to complex machine learning
+pipelines. It is also very appreciated by the community, as it is actively
+developed and maintained and well documented.
+One of the reasons for the pride of the Dask authors is the low barrier to
+entry, which makes the library usable by even the less expert Python
+programmers. There is no need to use things like classes and objects and adopt
+an object-oriented programming style, as the library is designed to be used in a
+functional programming style, using structures more similar to tuples, lists,
+and dictionaries  \cite{dask2015}, making it a more attractive choice for the
+adoption in a scientific project.
+
+The idea behind this library is to encode the code of the program into a
+directed acyclic graph (DAG), built by the library itself as a dictionary,
+where each entry is a task to be executed.
+This object is then passed to the \textit{``scheduler''}, which is the component
+responsible for managing the computation graphs, and the \textit{``workers''}:
+the components that perform the computation.
+The scheduler is a crucial library component and represents one of the most
+impactful choices in terms of total overhead introduced.
+The choice of the authors is to rely on a ``last in, first out'' (LIFO)
+strategy, meaning that the next task to be executed is the one whose
+dependencies were the most recently resolved.
+The authors' idea is to keep the scheduler as simple as possible, avoiding
+spending too much time computing complex metrics to decide the next task to
+schedule and keeping the overhead as low as possible.
+Several scheduler implementations are available depending on the use case, like
+a single-threaded, multi-threaded, or multi-process mode.
+Since the impact on the final performance of the scheduler is so significant,
+many efforts have been made to find a more efficient implementation of it, like
+the one presented by B{\"o}hm \cite{bohm2020}. In any case, the scheduler is a
+replaceable component, and the user can just implement its own scheduler tuned
+for its specific use case.
+
+As previously said, the tasks created by the scheduler are submitted to the
+workers. Workers are the components that actually perform the computation,
+reporting the results back to the scheduler.
+Provided that the scheduler is able to reach the workers and vice versa, and, if
+needed, the filesystem is shared among all the interested parties, the physical
+location where the workers are running is agnostic to the functioning of the
+library. This means that the workers can run on the same machine where the
+scheduler is running or on different machines in a distributed environment,
+making the parallelism of the execution implicit and transparent to the user.
+
+\section{Dask in practice}\label{sec:daskcloud}
+
+To enable efficient computation in different situations, Dask introduces several
+abstractions to simplify parallel computing tasks.
+At its core, the library offers three primary collections: Dask-Arrays,
+Dask-DataFrames, and Dask-Bags.
 
 \begin{itemize}
-  \item presentarlo come tool che ci permette di exploitare il multi-node anche
-    su kubernetes
-  \item Libreria python molto flessibile e aprezzata per il calcolo parallelo
-  \item Interessante /case of study/ per dimostrare che fare HPC nel cloud è possibile
+  \itemsep0em
+  \item \texttt{dask.array} \cite{daskdoc-array}: provides a subset of the
+    trendy NumPy library, keeping the same interface. It is designed to operate
+    with multi-dimensional arrays of numerical data that can be partitioned
+    across multiple nodes in the cluster. Each partition is called a
+    \texttt{chunk} or \texttt{block} of data, which Dask can process in parallel.
+    This allows users to work with data that does not necessarily fit in the memory
+    of a single machine.
+
+    This is the less structured collection, which is meant for numerical data.
+    For this reason, it is also the most efficient one and comes with many
+    functions to manipulate the already implemented and optimized data.
+  \item \texttt{dask.bag}: is an unordered collections which allows repetitions.
+    It is meant to be used with unstructured or semi-structured data. They are
+    suitable, for example, for large-scale data processing tasks such as natural
+    language processing.
+  \item \texttt{dask.dataframe} \cite{daskdoc-dataframe}: provides the same
+    interface as the popular Pandas library, which is widely used for data
+    manipulation. It is meant to be used with structured data, in detail, with
+    tabular data.
+
+    However, since the data are more structured and can be more heterogeneous,
+    for instance, numerical and strings data in various columns, as highlighted
+    by the same Rocklin \cite{dask2015}, the performance of this collection is
+    far from the one of the Dask-Array.
 \end{itemize}
 
+Those collections mime perfectly the interface of some of the most popular and
+widely used libraries in the scientific community, like NumPy and Pandas, making
+the transition to Dask very smooth for the user.
 
-\section{Our benchmark}\label{sec:daskbenchmark}
+Since its first release, the interest in the project has grown, and the
+community has developed several extensions to the library, like Dask-ML or
+Dask-CUDA.
+Two side projects more relevant for the scope of this thesis are
+\texttt{dask\_jobqueue} and \texttt{dask-kubernetes} packages.
 
-5 pag.
+The first one, \texttt{dask\_jobqueue}, is designed to facilitate the use of
+Dask in traditional HPC clusters.
+This package simplifies the creation and management of Dask clusters (set of
+scheduler and its workers) on these systems by providing an interface that
+abstracts much of the complexity of configuring and launching jobs across
+multiple nodes.
+It provides an interface to uniform the way to allocate the resources on the
+cluster: setting some parameters like the number of workers and the assigned
+resources (CPUs and memory); this library autonomously takes care of submitting
+the job to the cluster's job scheduler.
+In this way, the user can focus on the computation without worrying about
+resource allocation, which may vary depending on the adopted scheduler (SLURM,
+PBS, LSF, and many others are supported).
+In this way, multiple jobs will be autonomously spawned, each executing the
+\texttt{dask-worker} command, which will connect to the scheduler and start to
+execute the tasks. The worker will be automatically terminated when the
+computation is finished releasing the resources.
+
+The latter one, \texttt{dask-kubernetes}, is tailored for modern cloud-native
+environments where applications are containerized and orchestrated by
+Kubernetes.
+This package interacts with a dedicated \texttt{dask-operator}, which must be
+installed on the cluster. It creates the appropriate manifest containing a
+DaskCluster CRD on the fly to apply to the Kubernetes cluster.
+The user can specify the number of workers and the resources to allocate, and
+the operator will take care of creating the pods and the services needed to
+execute the computation.
+It is also possible to specify the image for schedulers and workers if the user
+wants to use a custom image with some specific libraries installed.
+
+Overall, Dask's design and its supporting ecosystem provide a versatile and
+scalable platform for parallel computing, whether on a single machine, a
+traditional HPC cluster, or a modern cloud infrastructure. This flexibility,
+combined with its compatibility with familiar Python tools, makes Dask an
+appealing choice for data scientists, researchers, and engineers looking to
+handle large-scale data processing and computation efficiently.
+
+\section{Dask as a tool to benchmark infrastructures}\label{sec:daskbenchmark}
+
+Being versatile and flexible, Dask appears to be the perfect tool for assessing
+how a given infrastructure performs under various workloads.
+This section will present a benchmark developed with Dask that aims to simulate
+some operations commonly executed in a scientific context.
+Similarly to the previous chapter, the idea is to execute the same code on the
+two nodes of the THIN partition of ORFEO cluster\footnote{Technical details have
+  already been described in section \ref{subsec:hardware}} equipped with the
+SLURM job scheduler. Then, the execution of the same code on the same hardware
+will be repeated, but in this second iteration, the Kubernetes orchestrator will
+be used to manage the resources.
+In this way, it is possible to determine in quantitative terms the performance
+gap between the two different cluster management paradigms, allowing more
+precise evaluations of the worthiness of all the features provided by the
+Kubernetes orchestrator.
+Since the code is the same, the only difference between the two executions is
+how the resources are allocated and managed.
+
+The code used to benchmark the two different infrastructures was developed by
+the author of this thesis specifically for this purpose.
+The general trend is to develop a code tailored explicitly for the use case
+needed or to compare the Daks performance with other libraries with similar
+functionality, like Spark or Ray.
+It follows that the choice of creating a custom benchmark from scratch was made
+because there was not any standard benchmark already used and recognized by the
+community to be used for this purpose, and the author wanted to have complete
+control over the code and the operations executed.
+The proposed benchmark is a collection of operations commonly executed in
+scientific contexts and designed to be executed on arrays and data frames.
+It was heavily inspired by a blog post made by Matthew Rocklin, the principal
+author of the library, where he presents a similar benchmark to show the
+scalability performance and limits of his creation \cite{Rocklinblog}.
+
+\subsection{Benchmark tasks description}\label{subsec:benchmarktasks}
+
+The code is designed to evaluate the so-called ``weak scalability'', which means
+that the data size is scaled according to the number of computational resources
+used, keeping the amount of data per worker constant. The ideal case for weak
+scalability is when the execution time remains constant, regardless of the
+number of workers used, or equivalently, the rate of data processable per unit
+of time is a linear function of the number of workers.
+
+For what concerns the operations executed on the arrays, the benchmark is
+composed of the following tasks:
 
 \begin{itemize}
-  \item Simulazione di operazioni comuni su DF e Array
-  \item Scritto perchè non esiste nulla per benchmarkare l'infrastruttura
-  \item 2.1 -> Come lo abbiamo eseguito sui THIN?
-  \item 2.2 -> Come lo abbiamo eseguito su Kubernetes?
+  \itemsep0em
+  \item \textit{Randomly initialization of a 2-D array}: It measure the time
+    needed to randomly initialize a 2-D array of integers representing a
+    $\psi\times\psi$ matrix and persist it in memory.
+
+    The size $\psi$ of the array is scaled accordingly to the number of cores
+    used, with the following formula: $\psi = k \cdot \sqrt{n}$ where $k$ is a
+    constant term fixed to 5000 and $n$ is the number of cores used.
+  \item \textit{``blockwise'' operation}: To efficiently store and manipulate
+    the arrays, Daks split the data into blocks, the smallest data unit that
+    can be processed in parallel. The library provides a function
+    \texttt{map\_blocks()} that applies a function to each block of the array.
+
+    The elementary function \texttt{x += 1} is used in this case.
+    This is an embarrassingly parallel operation since no communication is
+    needed, making it a perfect candidate to see the impact of the overhead
+    given by the scheduler-worker communication.
+  \item \textit{``elementwise'' operation}: Similar to the previous case, but in
+    this case, instead of relying on the block structure of the array, a new
+    array is created, and its elements are computed sequentially one by one:
+    \texttt{y = sin(x)**2 + cos(x)**2}.
+  \item \textit{reduction operation}: The variance of all the array elements is
+    computed. This is a reduction operation, meaning the result is a scalar
+    value computed from the whole array.
+
+    Unlike the previous case, this operation requires a little communication
+    since the workers must communicate with each other (passing through the
+    scheduler) the partial results to compute the final one.
+ \item \textit{``row-wise'' reduction operation}: Similar to the previous case,
+   but in this case, the variance is computed for each row of the array.
+    This operation is more complex than the previous one since it requires more
+    communication, and the final result is a 1-D array of the same length as the
+    original array's number of rows.
+
+    Note that since the array is stored partitioned by blocks, which can be
+    visualized as sub-matrices, elements of the same row reside in different
+    blocks, which can be assigned by the scheduler to different workers, making
+    the communication more relevant.
+  \item \textit{Random access}: It measures the time needed to retrieve a single
+    element at an arbitrary position of the array. This operation is not
+    parallelized, and the expectation is that the time needed to retrieve an
+    item should remain constant regardless of the number of workers used.
+  \item \textit{Sum of the transposed matrix}: Compute the sum of the original
+    matrix with its transpose $B = A+A^T$.
+
+    This task is more complex and is meant to be an example of a more
+    sophisticated computation that requires more communication since the
+    corresponding symmetric entries must be retrieved for each element of the
+    matrix.
 \end{itemize}
+
+Instead, for the data frame, the operations are:
+
+\begin{itemize}
+  \itemsep0em
+  \item \textit{Randomly initialization of a dataframe}: Time needed to
+    initialize a  \texttt{dask.DataFrame} with $6$ columns and $\varphi$ rows.
+    In this case, since the number of columns is fixed, to keep the ratio of the
+    problem size and the number of workers constant, the number of rows is
+    scaled linearly with the number of workers: $\varphi = k \cdot n$ where $k$
+    is a constant term fixed to $3000$ and $n$ is the number of cores used.
+    Although the DataFrame is a more structured object that allows storing
+    different types of data, all columns are filled with random integer numbers.
+    The reason is to keep the benchmark as simple as possible and to maximize
+    the number of operations done in the following steps (since some of those
+    can only be performed for numerical data).
+  \item \textit{``blockwise'' operation}: similarly to the array case, the
+    \texttt{map\_partition()} function provided by the Dask library is used to
+    compute a new DataFrame where each element is incremented by one.
+  \item \textit{Random access}: A fixed dataframe row is retrieved.
+    Like in the analog array case, the expectation is that the time needed to
+    retrieve a row should remain constant regardless of the number of workers.
+  \item \textit{Reduction operation}: Measure the time needed to compute a
+    reduction operation (standard deviation) over all the numeric columns of the
+    data frame.
+  \item \textit{``group-by'' with reduction, 1 column}: The group-by operation
+    is a typical operation in data manipulation and processing. Given a data
+    frame, it will return a new data frame where all the rows with the same
+    value over a specific column are grouped together. The result is a new row
+    with the share value in the column taken as reference and the result of a
+    reduction operation (in this case, the standard deviation) over all the
+    other columns.
+  \item \textit{``group-by'' with reduction, 2 columns}: Analogue to the
+    previous case, but in this case, the rows will be grouped by the values of a
+    pair of columns.
+  \item \textit{Sort the data}: Time needed to re-arrange all the data frame
+    rows such that the values of a given column are sorted.
+
+    This scenario is expected to be the one that involves the most communication
+    among the workers since the rows must be re-arranged in a specific order.
+\end{itemize}
+
+\subsection{How measurements were taken}\label{subsec:benchmarkmeasuraments}
+
+The code was executed on the two nodes of the THIN partition using the
+\texttt{dask\_jobqueue} and \texttt{dask-kubernetes} packages previously cited.
+
+The scaling test was performed using starting from 1 for having a reference of
+the performance of the serial execution, and then increasing the number of cores
+starting from 2 up to 48 with a step of 2, in order to fill the two nodes
+available as computing nodes completely.
+In both cases, bare metal and Kubernetes with Cilium CNI for pod communication,
+only the worker processes were executed in the two nodes dedicated to the
+computation. The scheduler was executed on a different node (the control plane
+node in the Kubernetes case due to resource constraints) with a fixed resource
+allocation of 8 CPUs and 32 GB of memory.
+
+In all the cases, all the computational resources used were taken exclusively
+for the measurements, ensuring that no other processes were running on the same
+nodes that could pollute the results.
+The code was executed thirty times for each configuration, and the average time
+with the standard deviation was computed to have a more reliable estimation of
+the performance of the infrastructure.
+
+In the bare metal case, the SLURM job scheduler makes allocating the resources
+straightforward since it allows for specifying the number of CPUs to book a job
+and then spawn the processes in the allocated resources.
+It is sufficient to submit multiple jobs with the same amount of CPUs and
+memory requested, one for each worker used, to have the desired configuration.
+
+In Kubernetes, this process is a little more complex. One of the most important
+and characteristic features of an orchestrator is the ability to manage the
+resources assigned to a pod dynamically.
+This behavior, which usually is a great advantage, must be disabled in this
+case; otherwise, as soon as the pod is created and the scheduler realizes that
+it is saturating the initially assigned resources, it will try to allocate more,
+resulting in the invalidation of the measurements since the final results will
+not be comparable anymore.
+Luckily, the Kubernetes API offers a way to specify the resources that a pod can
+use. In particular, the \texttt{spec.container.resources.limits} and
+\texttt{spec.container.resources.requests} fields serve this purpose
+\cite{kdoc-resources}.
+
+The \texttt{requests} field specifies the minimum amount of resources a pod
+needs to find available in a node to be scheduled. If not enough resources are
+available, the pod will remain in the pending state until the resources are
+freed.
+The \texttt{limits} field is used to specify the maximum amount of resources
+that a pod can use in case of need. This does not mean that the resources
+specified in this field are reserved for the specific pod; in fact, it is
+possible to ``overbook'' the resources of a node, for example, in the case of
+different workloads on different pods are executed simultaneously but require
+more resource in a disjoint time intervals.
+To obtain a fair comparison and mimic the behavior of the SLURM job scheduler,
+it is sufficient to set the \texttt{requests} and \texttt{limits} fields to the
+same values; in this way, the exact amount of resources needed by the pod will
+be reserved, and the pod will not be able to use more than that.
+Eventually, the \texttt{spec.replicas} field is used to specify the number of
+replicas of the pod that must be created.
+
+It last to specify the criteria used to decide the amount of resources to
+allocate for each worker. There is not a general rule to follow, and preliminary
+analysis showed that different configurations can lead to better performance in
+some cases and worse in others.
+
+The adopted strategy was to set:
+$$
+\#_{\text{worker\_CPU}} = \left\lfloor \frac{\#_{\text{CPUs}}}{\left( \left\lfloor
+    \frac{\#_{\text{CPUs}} - 1}{\#_{\text{CPUs\_per\_node}}} \right\rfloor \right) + 1} \right\rfloor
+$$
+
+This means that initially, a node will be filled up to the maximum of the
+available CPUs (in the case of the used hardware: 24 cores), using a single
+worker.
+Then, once the number of used cores is greater than the number present in a
+node, a new worker will be spawned, splitting the global amount of booked CPUs
+among the workers in equal parts. In this way, there will always be one worker
+per node since scheduling two on the same node is impossible.
+The idea behind this choice is to try to achieve the best performance by
+eliminating the infra-node communication, keeping only the unavoidable
+inter-node one.
+
+An important observation that must be made is the difference in how the SLURM
+scheduler and Kubernetes orchestrator let the user allocate the requested
+resources.
+The first mentioned considers the 100\% of the hardware resources bookable for a
+job.
+Obviously, this is not the reality since the operating system and other system
+processes (like also the \texttt{slurmd} daemon itself) are running on the same
+nodes and inevitably consume some resources.
+Hence, even if the scheduler allows booking the complete node, the actual amount
+of resources is only approximately equal to the requests.
+
+On the opposite side, in order to work, the Kubernetes orchestrator itself
+relies on some pods, which, like all the other pods, consume resources and have
+a minimum amount of resources that must be reserved for them.
+This could seem an irrelevant detail, but it has the consequence that the total
+amount of bookable resources is less than 100\% of the hardware resources.
+
+As a consequence, during the execution of the described benchmark, when the
+cores assigned to the pod worker are close or equal to the total available on
+the node, Kubernetes will start to throttle the pod since the pod will be
+considered un-schedulable.
+For what it was said in the results presented in the following section
+(\ref{sec:daskresults}), some points will be missing in the Kubernetes case.
+However, a general trend can be observed, and the results remain meaningful.
 
 \section{Results}\label{sec:daskresults}
+
 
 4 pag.
 
@@ -36,3 +412,9 @@ totale: 13 pag.
       \item Kubernetes ha un allocazione di risorse più flessibile -> minore networking
     \end{itemize}
 \end{itemize}
+
+\subsection{Array}
+
+\subsection{Dataframe}
+
+\subsection{Considerations}
