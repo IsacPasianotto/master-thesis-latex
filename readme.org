@@ -49,12 +49,12 @@
     - Risultati
   * [X] Commenti (2 pag.)
     - Commenti ai risultati
-- [ ] ~Chpt4: Dask, a case of study~ - *13 pag.*:
-  * [ ] What is dask (4 pag.)
+- [-] ~Chpt4: Dask, a case of study~ - *13 pag.*:
+  * [X] What is dask (4 pag.)
     - presentarlo come tool che ci permette di exploitare il multi-node anche su kubernetes
     - Libreria python molto flessibile e apprezzata per il calcolo parallelo
     - Interessante /case of study/ per dimostrare che fare HPC nel cloud è possibile
-  * [ ] Il nostro benchmark (5 pag.)
+  * [X] Il nostro benchmark (5 pag.)
     - Simulazione di operazioni comuni su DF e Array
     - Scritto perchè non esiste nulla per benchmarkare l'infrastruttura
     - -> Come lo abbiamo eseguito sui THIN?
