@@ -49,7 +49,7 @@
     - Risultati
   * [X] Commenti (2 pag.)
     - Commenti ai risultati
-- [-] ~Chpt4: Dask, a case of study~ - *13 pag.*:
+- [X] ~Chpt4: Dask, a case of study~ - *13 pag.*:
   * [X] What is dask (4 pag.)
     - presentarlo come tool che ci permette di exploitare il multi-node anche su kubernetes
     - Libreria python molto flessibile e apprezzata per il calcolo parallelo
@@ -59,12 +59,12 @@
     - Scritto perchè non esiste nulla per benchmarkare l'infrastruttura
     - -> Come lo abbiamo eseguito sui THIN?
     - -> Come lo abbiamo eseguito su Kubernetes?
-  * [ ] Risultati (4 pag.)
+  * [X] Risultati (4 pag.)
     - Commenti
-- [ ] ~Conclusions~ - 4 pag.:
-  * [ ] To sum up (2 pag.)
+- [X] ~Conclusions~ - 4 pag.:
+  * [X] To sum up (2 pag.)
     - è possibile portare l'HPC in cloud? Sì
     - Limiti sulla rete
-  * [ ] Possible improvements (2 pag.)
+  * [X] Possible improvements (2 pag.)
     - Mellanox per sfruttare l'infiniband?
     - Multus CNI per avere più CNI in un colpo solo
