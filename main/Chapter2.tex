@@ -164,7 +164,7 @@ and the latter for its simplicity and flexibility.
 
 \section{Node-to-node communication in Kubernetes}\label{sec:node2node}
 
-From the Red Hat system administration guide, we can read that
+From the Red Hat system administration guide:
 \textit{``A CNI plugin is responsible for inserting a network interface into the
     container network namespace (e.g., one end of a virtual ethernet (veth)
     pair) and making any necessary changes on the host (e.g., attaching the
@@ -198,24 +198,22 @@ In the rest of this chapter, the details about how the considered CNI plugins
 
 \subsection{Calico}\label{subsec:calico}
 
-Calico is a widely used CNI solution, created by Tigera and built on the BGP
-protocol\footnote{Border Gateway Protocol (BGP) is a standard communication
-  protocol for Autonomous Systems (AS). It facilitates the exchange of routing
-  and reachability information, determining the best path for communication
-  traffic \cite{BGPnistdef}.}.
-The installation process for Calico is straightforward and can be executed using
-either the helm package manager or Tigera's dedicated operator.
-After the installation, the Kubernetes cluster will spawn the following pods:
-\texttt{calico-apiserver} in a namespace of the same name and
+Calico is a widely used CNI solution created by Tigera and built on the Border
+Gateway Protocol(BGP) \footnote{BGP is a standard communication protocol for
+Autonomous Systems (AS). It facilitates the exchange of routing and reachability
+information, determining the best path for communication traffic
+\cite{BGPnistdef}.}. The installation process for Calico is straightforward and
+can be executed using either the helm package manager or Tigera's dedicated
+operator. After the installation, the Kubernetes cluster will spawn the
+following pods: \texttt{calico-apiserver} in a namespace of the same name and
 \texttt{calico-kube-controllers} and \texttt{calico-node} pods in the
-\texttt{calico-system} namespace.
-The \texttt{calico-apiserver} allows sysadmins to manage calico resource
-directly using \texttt{kubectl}.
-In contrast, the \texttt{calico-kube-controllers} pod monitors the Kubernetes
-API and performs actions based on the cluster state.
+\texttt{calico-system} namespace. The \texttt{calico-apiserver} allows sysadmins
+to manage calico resources directly using \texttt{kubectl}. In contrast, the
+\texttt{calico-kube-controllers} pod monitors the Kubernetes API and performs
+actions based on the cluster state.
 
-The most significant pod is the \texttt{calico-node}, deployed using a DaemonSet
-on each node, which runs three internal daemons \cite{calicodoc}:
+The principal pod is the \texttt{calico-node}, deployed using a DaemonSet on
+each node, which runs three internal daemons \cite{calicodoc}:
 
 \begin{enumerate}
   \itemsep0em
@@ -263,9 +261,21 @@ on each node, which runs three internal daemons \cite{calicodoc}:
 \end{enumerate}
 
 
-The Calico declined version of figure \ref{fig:cni-generic} is represented in
-figure \ref{fig:cni-calico}.
-Here is reported the step-by-step path of a network packet that has to be sent
+
+% The Calico declined version of figure \ref{fig:cni-generic} is represented in
+% figure \ref{fig:cni-calico}.
+% Here is reported the step-by-step path of a network packet that has to be sent
+% from pod A in node A to pod B in node B in this configuration:
+
+When using Calico, the user can configure the previously described components to
+achieve different network architectures. This study will limit ourselves to a
+typical generic setup for on-prem and on-the-cloud installation: an IPIP overlay
+mode combined with BGP for inter-node routing. We confined the cluster to a
+single L2 network to avoid paring BGP to our network infrastructure. In this
+case, the Calico declined version of figure \ref{fig:cni-generic} is represented
+in figure \ref{fig:cni-calico}. 
+
+Here we report the step-by-step path of a network packet that has to be sent
 from pod A in node A to pod B in node B in this configuration:
 
 \begin{enumerate}
@@ -291,7 +301,7 @@ from pod A in node A to pod B in node B in this configuration:
     other nodes in the cluster using BGP. Similarly, node A learns about the pod
     in node B through the BGP announcements from the BIRD instance running on
     that node.
-  \item \textit{Packet is routed to node B}: the routed learned by the BGP
+  \item \textit{Packet is routed to node B}: the route learned by the BGP
     client in the previous step are installed in the host routing table by BIRD,
     letting node A know how to reach the pod on the other nodes.
   \item \textit{Packet is ready to be sent to node B}: The packet from pod A is
@@ -299,6 +309,8 @@ from pod A in node A to pod B in node B in this configuration:
     learned via BIRD. Since node A knows how to reach node B (thanks to the BGP
     routes learned by BIRD), the packet is forwarded to the network interface
     \texttt{eth0} that leads to node B.
+    %% TODO an educated guess suggests me that at this step the packet is
+    %% encapsulated via IPIP
   \item \textit{confd checks}: the daemon queries the Kubernetes API and etcd
     from the control plane, ensuring that if there are any changes (e.g., new
     pods, some changes in the topology) node A is not aware of. If so, the BIRD
@@ -326,44 +338,56 @@ from pod A in node A to pod B in node B in this configuration:
 \subsection{Flannel}\label{subsec:flannel}
 
 Flannel is the second CNI plugin that was taken as a candidate for the
-Kubernetes infrastructure deployed in the ORFEO cluster. Flannel is a widespread
-solution developed by CoreOS, a promising company that was acquired by Red Hat
-in 2018.
-It is the default CNI plugin in many Kubernetes distributions, the most notably
-are the K3s open source project and the Amazon Elastic Kubernetes Service (EKS).
+Kubernetes infrastructure deployed in the ORFEO cluster. Flannel is a simple and
+widespread solution developed at CoreOS under the Red Hat umbrella science 2018.
+Thanks to its simplicity, minimalism, and portability, it has become the default
+CNI plugin in many Kubernetes distributions, among which K3s\footnote{K3s is an
+open-source project developed by Rancher under the Suse. This project is often
+mentioned as a more straightforward and lighter version of K8S} and the Amazon
+Elastic Kubernetes Service (EKS).
 
-Unlike Calico, which relies on BGP routing, Flannel's approach is based on
-encapsulation methods. In particular, by default, it uses the VXLAN
-protocol\footnote{ Virtual Extensible LAN (VXLAN) is a network virtualization
-  technology that provides a way to encapsulate Layer 2 packets within Layer 4
-  packets. This introduces an abstraction layer of indirection that allows
-  overcoming the limitations of the VLAN technology, like the maximum number of
-  VLANs that can be created in a network or, more importantly, in this context,
-  introduces the possibility of having multiple instances that share the same
-  physical network but are logically separated \cite{VXLANnistdef}.}
-for host routing across the nodes \cite{flannel-github}.
+Unlike Calico, which relies on BGP routing, Flannel's approach is based on a
+``static'' partitioning of the pod CIDR combined with iptables for packet
+routing (leveraging features such as destination natting). Host routing across
+the nodes is obtained, by default, by using the Virtual Extensible LAN (VXLAN)
+protocol \cite{flannel-github}\footnote{  VXLAN is a network virtualization
+technology that provides a way to encapsulate Layer 2 packets within Layer 4
+packets. This technology introduces an abstraction layer of indirection that
+allows overcoming the limitations of the VLAN technology, like the maximum
+number of VLANs that can be created in a network or, more importantly, in this
+context, introduces the possibility of having multiple instances that share the
+same physical network but are logically separated \cite{VXLANnistdef}.}
 
-The installation of Flannel is also straightforward, and it can be performed
-simply apply the manifest file provided by the official repository; however, a
-helm chart is also available.
-The installation process's result is minimal compared to the one of Calico since
-it will spawn (using a DaemonSet) just one pod called \texttt{kube-flannel} per
-node in a dedicated namespace with the same name. These pods are responsible for
-managing the network configuration of the node, ensuring seamless communication
-between pods across the cluster.
+% The installation of Flannel is also straightforward, and it can be performed
+% either by applying the manifest file provided by the official repository or by
+% using the official helm chart. In this case the installation process deploys
+% very few components with respect to Calico. Flannel will spawn (using a DaemonSet)
+% just one pod called \texttt{kube-flannel} per node in a dedicated namespace with
+% the same name. These pods are responsible for managing the network configuration
+% of the node, ensuring seamless communication between pods across the cluster.
 
 
-The main component of Flannel is \texttt{flanneld}, a binary agent that runs on
-each node in the cluster. This daemon has among his duties:
+% The main component of Flannel is \texttt{flanneld}, a binary agent that runs on
+% each node in the cluster. This daemon has among his duties:
+
+The installation of Flannel is straightforward, and it can be performed by
+applying the manifest file provided by the official repository or by using the
+official helm chart. As fewer features are implemented in this case, very few
+components are needed. Flannel will spawn (using a DaemonSet) just one pod
+called \texttt{kube-flannel} per node in a dedicated namespace with the same
+name. These pods are responsible for managing the network configuration of the
+node, ensuring seamless communication between pods and across the cluster. The
+main component of Flannel is \texttt{flanneld}, a binary agent that runs on each
+node in the cluster. This daemon, is responsible, among others, for the following
+operations:
 
 \begin{itemize}
-  \itemsep0em
   \item \textit{Subnet Management}: Each node in the Kubernetes cluster is
     assigned a unique subnet by \texttt{flanneld}, ensuring no IP address
     conflicts between pods across different nodes. This subnet is used to
     allocate IP addresses to pods on the node.
   \item \textit{Encapsulation and Routing}: Depending on the backend
-    configuration (e.g., VXLAN, host-gateway), \texttt{flanneld}
+    configuration (e.g., VXLAN), \texttt{flanneld}
     encapsulates the packets destined for other nodes within an overlay network.
     In the case of VXLAN, for instance, packets are encapsulated with a VXLAN
     header and sent across the network to the appropriate destination node.
@@ -379,13 +403,12 @@ each node in the cluster. This daemon has among his duties:
 \end{itemize}
 
 The general scheme proposed in figure \ref{fig:cni-generic} is contextualized
-for the Flannel CNI plugin in figure \ref{fig:cni-flannel}.
-Analogously to the previous section, let us have a look at the journey a packet
-has to do to be sent from pod A in node A to pod B in node B in a Kubernetes
-installation equipped with Flannel:
+for the Flannel CNI plugin in figure \ref{fig:cni-flannel}.  Analogously to the
+previous section, let us have a look at the journey a packet has to do to be
+sent from pod A in node A to pod B in node B in a Kubernetes installation
+equipped with Flannel:
 
 \begin{enumerate}
-  \itemsep0em
   \item \textit{Pod A generates a packet}: Pod A, running in node A, generates a
     packet destined for pod B, which is being executed in node B. In this phase,
     the packed still exists only in the network namespace of pod A, from whom
@@ -396,18 +419,18 @@ installation equipped with Flannel:
     other end of this veth pair is attached to node A's network bridge
     (\texttt{cni-bridge}) set up by Flannel.
     In this phase, the bridge on node A forwards the packet based on the IP
-    address. The flannel pod is typically connected to this bridge too
-    (\texttt{flannel.1}).
+    address.
+    % The flannel pod is typically connected to this bridge too (\texttt{flannel.1}).
+    % This is not true, you can check it with brctl show.
+    % At a first glance the iptable is responsible for changing the routing
   \item \textit{Encapsulation}: On node A, Flannel operates as an overlay
-    network and encapsulates the packet using VXLAN (default method, but
-    alternatives such as IPIP are available) to create a virtual L3 network over
-    the physical one.
-    The original packet is encapsulated inside a new packet with the following
-    additional information:
+    network and encapsulates the packet using VXLAN to create a virtual L3 network
+    over the physical one. The original packet is encapsulated inside a new packet
+    with the following additional information:
     \begin{itemize}
       \item Source IP: The IP address of node A.
       \item Destination IP: The IP address of node B.
-      \item Payload: The packed's original which content must be sent from pod A to pod B.
+      \item Payload: The original package which must be sent from pod A to pod B.
     \end{itemize}
   \item \textit{Packet transmission over the physical network}: the host kernel
     handles the encapsulated package, performing a node-to-node communication
@@ -425,14 +448,20 @@ installation equipped with Flannel:
     network hops.
 \end{enumerate}
 
+% A relevant aspect it must be mentioned is that unlike the other considered the
+% Flannel CNI plugin does not provide complete and exhaustive documentation. The
+% most similar thing to documentation is a collection of markdown files in a
+% \texttt{Documentation} folder in the official GitHub repository, which is more
+% focused on explaining all the possible ways to configure the CNI plugin rather
+% than how it works under the hood. However, since its popularity, many other
+% resources are available online, like dedicated blogs and articles.
 
-A relevant aspect it must be mentioned is that unlike the other considered the
-Flannel CNI plugin does not provide complete and exhaustive documentation. The
-most similar thing to documentation is a collection of markdown files in a
-\texttt{Documentation} folder in the official GitHub repository, which is more
-focused on explaining all the possible ways to configure the CNI plugin rather
-than how it works under the hood. However, since its popularity, many other
-resources are available online, like dedicated blogs and articles.
+A relevant aspect that we must mention is that, unlike the other CNIs considered
+within this work, the Flannel CNI plugin does not provide extensive
+documentation. The available information is more focused on covering all the
+possible ways to configure the CNI plugin rather than how it works under the
+hood. Nevertheless, since its popularity, many other resources are available
+online, like dedicated blogs and articles.
 
 
 \begin{figure}
@@ -451,94 +480,154 @@ resources are available online, like dedicated blogs and articles.
 
 \subsection{Cilium}\label{subsec:cilium}
 
-The last candidate is the Cilium CNI plugin. Cilium is a powerful and advanced
-open-source CNI plugin that has among its supporters companies of the caliber of
-Google, Datadog, and Red Hat, to mention a few.
-Despite being a relatively new project, it has gained much traction in the
-Kubernetes community, to the point that it has become the default choice in
-Google Kubernetes Engine (GKE) for the network policy enforcement.
+% The last candidate of this study is the Cilium CNI plugin. Cilium is a powerful and advanced
+% open-source CNI plugin that has among its supporters companies of the caliber of
+% Google, Datadog, and Red Hat, to mention a few.
+% Despite being a relatively new project, it has gained much traction in the
+% Kubernetes community, to the point that it has become the default choice in
+% Google Kubernetes Engine (GKE) for the network policy enforcement.
 
-What makes Cilium so attractive is probably its statement declaration of being a
-CNI plugin focused on high network performance and security.
-This is achieved by Cilium's unique approach to networking, which, unlike other
-traditional CNI solutions, leverages eBPF\footnote{
-  eBPF (extended Berkeley Packet Filter) is a technology that allows the
-  in-kernel execution of user-defined programs without modifying the kernel
-  source code, loading dedicated kernel modules, and without the need to reboot
-  the machine to apply the changes. Initially developed by Berkeley University
-  for packet filtering tasks, it has evolved and is now adopted in a wide range
-  of situations \cite{Hedam2021}. The main advantage of eBPF is that it allows
-  the execution of programs in kernel space, which is expected to be much
-  faster. In very short, the process is similar to a Just-In-Time (JIT)
-  compilation, where the eBPF program is compiled into a set of instructions
-  that are executed by a sort of virtual machine in the kernel
-  space\cite{Sharaf2022}.
-} technology to provide a deeper level of control and visibility over the
-network traffic.
+% What makes Cilium so attractive is probably its statement declaration of being a
+% CNI plugin focused on high network performance and security.
+% This is achieved by Cilium's unique approach to networking, which, unlike other
+% traditional CNI solutions, leverages eBPF\footnote{
+%   eBPF (extended Berkeley Packet Filter) is a technology that allows the
+%   in-kernel execution of user-defined programs without modifying the kernel
+%   source code, loading dedicated kernel modules, and without the need to reboot
+%   the machine to apply the changes. Initially developed by Berkeley University
+%   for packet filtering tasks, it has evolved and is now adopted in a wide range
+%   of situations \cite{Hedam2021}. The main advantage of eBPF is that it allows
+%   the execution of programs in kernel space, which is expected to be much
+%   faster. In very short, the process is similar to a Just-In-Time (JIT)
+%   compilation, where the eBPF program is compiled into a set of instructions
+%   that are executed by a sort of virtual machine in the kernel
+%   space\cite{Sharaf2022}.
+% } technology to provide a deeper level of control and visibility over the
+% network traffic.
+
+The last candidate for this study is the cilium CNI plugin. Cilium is another
+powerful and feature-rich open-source CNI plugin that has companies of the
+caliber of Google, DataDog, and Red Hat among its developers. Despite being a
+relatively new project, it has gained much traction in the Kubernetes community.
+Recently, it has also become the default choice in the Google Kubernetes engine
+(GKE), a valid reason to consider it a production-ready solution when deploying
+new clusters. 
+
+What we believe makes Cilium so attractive is its statement declaration that it
+is a CNI plugin focused on high network performance and security. This goal is
+achieved by Cilium's unique approach to networking, which, unlike other
+traditional CNI solutions, leverages extended Berkeley Packet Filter
+(eBPF\footnote{eBPF is a technology that allows the in-kernel execution of
+user-defined programs without modifying the kernel source code, loading
+dedicated kernel modules, and without the need to reboot the machine to apply
+the changes. Initially developed by Berkeley University for packet filtering
+tasks, it has evolved and is now adopted in a wide range of situations
+\cite{Hedam2021}}). The main advantage of eBPF is that it allows the execution
+of programs in kernel space, which can run faster and have higher privileges
+than those in the user space. In very short, the process is similar to a
+Just-In-Time (JIT) compilation, where the eBPF program is compiled into a set of
+instructions that are executed in a send-boxed environment in the kernel
+space\cite{Sharaf2022}. This technology allows for higher control and visibility
+over the network traffic, strongly impacting latency.
+
+% The installation process of Cilium can be performed using the helm package
+% manager for Kubernetes; however, it is strongly recommended to use the dedicated
+% \texttt{cilium install} command provided by a dedicated CLI tool.
+% In fact, the Cilium project provides a dedicated CLI tool written in Go which
+% can be used to install, manage, and monitor the Cilium CNI plugin in a
+% Kubernetes more comfortably\footnote{To be fair, Calico project has a similar
+%   tool called \texttt{calicoctl} but it usage avoidable at all since also its
+%   documentation does not report it anywhere but in its dedicated page}.
+% The installation ends up with the spawning of the \texttt{cilium-operator} pod
+% plus one \texttt{cilium} and one \texttt{cilium-envoy} pods per node in the
+% cluster; unlike the other CNIs, all these pods are not spawned in a dedicated
+% namespace but the \texttt{kube-system} one is used. The following list
+% summarizes the purpose of each of them \cite{ciliumdoc-components,
+%   ciliumdoc-envoy}:
 
 The installation process of Cilium can be performed using the helm package
-manager for Kubernetes; however, it is strongly recommended to use the dedicated
-\texttt{cilium install} command provided by a dedicated CLI tool.
-In fact, the Cilium project provides a dedicated CLI tool written in Go which
-can be used to install, manage, and monitor the Cilium CNI plugin in a
-Kubernetes more comfortably\footnote{To be fair, Calico project has a similar
-  tool called \texttt{calicoctl} but it usage avoidable at all since also its
-  documentation does not report it anywhere but in its dedicated page}.
-The installation ends up with the spawning of the \texttt{cilium-operator} pod
-plus one \texttt{cilium} and one \texttt{cilium-envoy} pods per node in the
-cluster; unlike the other CNIs, all these pods are not spawned in a dedicated
-namespace but the \texttt{kube-system} one is used. The following list
-summarizes the purpose of each of them \cite{ciliumdoc-components,
-  ciliumdoc-envoy}:
+manager for Kubernetes; however, the documentation strongly recommends using the
+dedicated \texttt{cilium install} command provided by a dedicated CLI tool. The
+Cilium project provides a dedicated CLI tool written in Go which can be used to
+install, manage, and monitor the Cilium CNI plugin in Kubernetes more easily
+\footnote{We didn't mention it earlier, but Calico has a similar tool called
+\texttt{calicoctl}. However, such a tool is not in pair with what Cilium can
+offer, and since its usage can be avoided, we decided to do so}. The
+installation ends up with the spawning of the \texttt{cilium-operator} pod plus
+one \texttt{cilium} and one \texttt{cilium-envoy} pods per node in the cluster;
+unlike the other CNIs, all these pods are not spawned in a dedicated namespace
+but the \texttt{kube-system} one is used. The following list summarizes the
+purpose of each of them \cite{ciliumdoc-components, ciliumdoc-envoy}:
+
+% \begin{itemize}
+%   \itemsep0em
+%   \item \textit{Operator pod}: As every operator in rubbernecks is responsible orchestrating all those aspects that should logically be handled once and for all, the entire cluster rather than case-specific decisions that should be taken node per node. Technically, it is not essential in any network policy decision. A cluster could, in theory, continue to function even when that pod is temporary unavailable. However, the operator's absence could lead to the following: is tempraly unaviability shouldent impact operations
+%     \begin{itemize}
+%       \itemsep0em
+%       \item delays in the IP Address Management (IPAM), which could lead to postponed scheduling of new workloads when the operators need to assign additional IP addresses.
+%       \item failure of updating the key-value datastore (etcd) with values, which may lead to agents declaring unhealthiness state and restarting.
+%     \end{itemize}
+%   \item \textit{Cilium agent pods}: They are the core of the Cilium CNI plugin. A DaemonSet guarantees their presence among every node. They accept the Kubernetes configuration through the API and enforce the desired networking, service load-balancing, and security policies. Moreover, they wait for events from the orchestrator to learn about the current cluster situation (new pods, new nodes, ...) and react accordingly, managing the eBPF programs used in the host kernel to control all network access in/out of those containers.
+%   \item \textit{Envoy pods}: They are used as host proxy for enforcing network policies specified in the Kubernetes NetworkPolicies cluster specifications. They are responsible for proxying all L7 traffic to and from the pods in the node, keeping a separate process concerning the agent one. The main advantages of this separation are:
+%     \begin{itemize}
+%       \itemsep0em
+%       \item possibility of restarting the agent (e.g., for upgrades) without impacts for the live traffic since it will be proxied via envoy
+%       \item separate CPU and memory limits for performance isolation
+%       \item Dedicated health probes and logs for the two components
+%     \end{itemize}
+% \end{itemize}
 \begin{itemize}
-  \itemsep0em
-  \item \textit{Operator pod}: It is responsible orchestrating all those
-    aspects that should logically be handled once and for all, the entire cluster
-    rather than case-specific decisions that should be taken node per node.
-    Technically, it is not essential in any network policy decision. A cluster
-    could, in theory, continue to function even when that pod is temporary
-    unavailable. However, the operator's absence could lead to the following:
-    \begin{itemize}
-      \itemsep0em
-      \item delays in the IP Address Management (IPAM), which could lead to
-        postponed scheduling of new workloads when the operators need to assign
-        additional IP addresses.
-      \item failure of updating the key-value datastore (etcd) with values,
-        which may lead to agents declaring unhealthiness state and restarting.
-    \end{itemize}
+  \item \textit{Operator pod}: Like every operator in Kubernetes, it directs all
+    aspects concerning Cillium. From pod scheduling to resource monitoring and
+    policy updating across the cluster. Technically, it is not essential in any
+    network policy decision. A cluster could, in theory, continue to function even
+    when that pod is temporarily unavailable. However, the operator's absence for a
+    prolonged amount of time could lead to infrastructure instability.
   \item \textit{Cilium agent pods}: They are the core of the Cilium CNI plugin.
     A DaemonSet guarantees their presence among every node. They accept the
     Kubernetes configuration through the API and enforce the desired networking,
-    service load-balancing, and security policies.
-    Moreover, they wait for events from the orchestrator to learn about the
-    current cluster situation (new pods, new nodes, ...) and react accordingly,
-    managing the eBPF programs used in the host kernel to control all network
-    access in/out of those containers.
+    service load-balancing, and security policies. Moreover, they wait for events
+    from the orchestrator to learn about the current cluster situation (new pods,
+    new nodes, ...) and react accordingly, managing the eBPF programs used in the
+    host kernel to control all network access in/out of those containers.
   \item \textit{Envoy pods}: They are used as host proxy for enforcing network
-    policies specified in the Kubernetes NetworkPolicies cluster specifications.
-    They are responsible for proxying all L7 traffic to and from the pods in the
-    node, keeping a separate process concerning the agent one.
-    The main advantages of this separation are:
+    policies at the application layer, as specified in the Kubernetes
+    NetworkPolicies cluster specifications. They are responsible for proxying all L7
+    traffic to and from the pods in the node, keeping a separate process concerning
+    the agent one.  The main advantages of this separation are:
+    % TODO Double check on this.
     \begin{itemize}
-      \itemsep0em
-      \item possibility of restarting the agent (e.g., for upgrades) without
-        impacts for the live traffic since it will be proxied via envoy
+      \item possibility of restarting the agent (e.g., for upgrades) without impacts for the live traffic since it will be proxied via envoy
       \item separate CPU and memory limits for performance isolation
       \item Dedicated health probes and logs for the two components
     \end{itemize}
 \end{itemize}
 
-It is notable to know that by default, a lot of interesting features are not
-enabled, to mention a few: the possibility of performing inter-cluster
-communication with \texttt{cilium-clustermesh} or the capability of Cilium to
-perform network packet encapsulation similar to what happens in the case of
-Flannel.
+% It is notable to know that by default, several features are not enabled, for
+% example: the possibility of performing inter-cluster communication with
+% \texttt{cilium-clustermesh} or the capability of Cilium to perform network
+% packet encapsulation similar to what happens in the case of Flannel. The latter
+% becomes essential when deploying on cluster where there is no control on the
+% host network.
+
+It is notable to know that by default, several features are not enabled for
+example: the possibility of performing inter-cluster communication with
+\texttt{cilium-clustermesh} or the capability of Cilium to perform network
+packet encapsulation similar to what happens in the case of Flannel. The latter
+becomes essential when deploying on an infrastructure where there is no control
+over the hosts network.
+
+% The Cilium declined version of figure \ref{fig:cni-generic} is reported in
+% figure \ref{fig:cni-cilium}. To be consistent with the structure adopted in
+% section \ref{subsec:calico} and \ref{subsec:flannel}, there is reported also
+% for the Cilium case, the step-by-step path a network packet has to go through to
+% be sent from pod A in node A up to pod B in node B:
 
 The Cilium declined version of figure \ref{fig:cni-generic} is reported in
-figure \ref{fig:cni-cilium}. To be consistent with the structure adopted in
-section \ref{subsec:calico} and \ref{subsec:flannel}, there is reported also
-for the Cilium case, the step-by-step path a network packet has to go through to
-be sent from pod A in node A up to pod B in node B:
+figure \ref{fig:cni-cilium} as previously done with Calico \ref{subsec:calico}
+and Flannel \ref{subsec:flannel}. We also report the step-by-step path a network
+packet has to go through to be sent from pod A in node A up to pod B in node B:
+
 
 \begin{enumerate}
   \itemsep0em
@@ -581,12 +670,28 @@ be sent from pod A in node A up to pod B in node B:
 \end{figure}
 
 
-As it was possible to appreciate the set of possibilities to configure the host
-operating system and network to guarantee the communication nodes in a
-Kubernetes cluster is incredibly vast.
-It should be reasonable to expect that such marked difference in the
-implementation behind the hood will inevitably reflect in different performance
-of communication.
-In the following chapter it will be shown a possible way to assess the
-performance of the CNIs in a Kubernetes cluster, to express a quantitative
-evaluation.
+% As it was possible to appreciate the set of possibilities to configure the host
+% operating system and network to guarantee the communication nodes in a
+% Kubernetes cluster is incredibly vast.
+% It should be reasonable to expect that such marked difference in the
+% implementation behind the hood will inevitably reflect in different performance
+% of communication.
+% In the following chapter it will be shown a possible way to assess the
+% performance of the CNIs in a Kubernetes cluster, to express a quantitative
+% evaluation.
+
+This chapter explored various possibilities for configuring the host operating
+system and network to guarantee that the communication nodes are in Kubernetes.
+We choose three of the most widespread and supported CNIs in the field, but many
+more solutions are available to suit different needs and niches. We covered
+Calico, a comprehensive and well-established solution, with the disadvantage of
+not being straightforward to configure in all its parts. We then went through
+Flannel, a minimalistic but easy-to-use solution, and Cillium, the most
+cutting-edge that takes innovative approaches by leveraging eBPF whenever
+possible to increase performance. Based on the discussion above, it is
+reasonable to expect that such marked differences in the implementation behind
+the hood of network management will inevitably reflect in different
+communication performances. In the following chapters, we will assess the
+performance of the CNIs in a Kubernetes cluster from an HPC perspective using
+well-recognized benchmarks and a data science perspective to see how
+infrastructural choices impact commonly used frameworks.
