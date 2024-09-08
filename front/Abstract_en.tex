@@ -178,18 +178,14 @@ second) should be linearly dependent on the number of cores.
 
 \section*{Main results}
 
-
 First of all, a premise for the following section: the expression "bare metal"
 will refer to the physical hardware of the nodes in the THIN partition of the
-orfeo cluster that is composed of servers equipped with two Intel Xeon Gold
-6126, 768 GiB of RAM, and, for this study, a 25 Gb network card. In all the
-other contexts in which a CNI plugin is mentioned, all the experiments are
-performed in a Kubernetes cluster composed of three nodes (a control plane and
-two worker nodes), with the same hardware configuration of the THIN nodes,
-except for the CPUs in the socket which are less powerful (Intel® Xeon® Silver
-4114 ). While this difference does not affect the results of the network
-evaluation or the scalability of the code, some additional considerations will
-be required when discussing the performance of the Kubernetes cluster.
+ORFEO cluster that is composed of servers equipped with two Intel Xeon Gold
+6126, 768 GiB of RAM, and, for this study, a 25 Gb network card.
+In the case of the Kubernetes the hardware configuration is the same of the bare
+metal. In this second case in fact, 3 THIN nodes were used to create a
+Kubernetes cluster, composed by one control plane and two worker nodes.
+
 As mentioned in the methodological section, the first evaluation concerned
 network performance. In particular, the latency and bandwidth of the network
 were measured to determine which of the considered CNI plugins has the best
@@ -199,31 +195,33 @@ Kubernetes require the control plane to interact with the pods it administrates,
 and the connection between pods is achieved by attaching a virtual network
 interface to them, the CNI plugin is expected to impact the network performance
 significantly.
+
 From the data presented in Figure \ref{fig:summary-osu_en}, it is clear that the
 newly introduced layer adds substantial latency to the communication. The added
-latency amount strongly depends on the plugin and varies from approximately 1.2
-to five times the slurm reference. Among the studied plugins, it is clear that
+latency amount strongly depends on the plugin and varies from approximately 1.79
+to 3.25 times the SLURM reference. Among the studied plugins, it is clear that
 cilium, out of the box, is the best choice. These advantages are thanks to
-adopting the novel ebpf dataplane that avoids some processing of the network
+adopting the novel eBPF dataplane that avoids some processing of the network
 package by netfilter. We observed a spread in the results that needed more
 investigation. Second in line is Calico, which, with the standard configuration,
-performs similarly to the last Flannel. Both solutions are probably bottlenecked
-by the encapsulation required in the VXLAN step they rely on and for using
-iptables for load balancing. In contrast, the flannel plugin is the one that
-allows it to reach the maximum bandwidth; however, in this second case, the
-difference between the plugins is almost negligible. The value reached at
-convergence is probably dictated by internal limits in place to grant a fair
-usage of the resources, such as the bandwidth, in scenarios where the main goal
-is to grant each pod a fair amount of traffic. Focusing on the second column, we
-see how the pod-to-pod communication is slowed by having to pay the network
-layer.
+performs similarly to the last Flannel.
+Both solutions are probably bottlenecked by the encapsulation required in the
+VXLAN step they rely (Flannel) on and for using iptables for load balancing
+(Calico).
+In contrast, the flannel plugin is the one that allows it to reach the maximum
+bandwidth; however, in this second case, the difference between the plugins is
+almost negligible. The value reached at convergence is probably dictated by
+internal limits in place to grant a fair usage of the resources, such as the
+bandwidth, in scenarios where the main goal is to grant each pod a fair amount
+of traffic. Focusing on the second column, we see how the pod-to-pod
+communication is slowed by having to pay the network layer.
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.8\textwidth]{img/abstract/summary-osu}
+  \includegraphics[width=\textwidth]{img/abstract/summary-osu}
   \caption{Osu Micro-Benchmarks results. The top row shows the recorded latency
-    (lower values are better) for different CNI and the baseline of a bare-metal
-    calculation as a function of the MPI message size. The bottom row displays
+    (lower values are better) for different CNI and the  bare metal case
+    as a function of the MPI message size. The bottom row displays
     the bandwidth (higher values are better) for the same set of setups. The
     first column shows the result in node-to-node communication, and the second
     is in the pod-to-pod in the same node case compared with mpi processes on
@@ -234,59 +232,50 @@ layer.
 
 Once we established that the cilium CNI plugin was the most attractive choice,
 the next step was to evaluate the performance of the infrastructure on which the
-code is running under a typical data science workload. The Dask Operator for
-Kubernetes was utilized to do this. A net advantage of this choice is that it
-can be reproduced in Slurm-based infrastructure. This possibility allows for
-meaningful comparison between bare metal and Kubernetes tests. The Dask Operator
-is a Kubernetes operator that manages Dask clusters. Removing the Kubernetes
-abstraction, it is possible to spawn a Dask orchestrator that interacts with
-SLURM to create a "cluster" object, a collection of "worker" objects. These
-workers are the equivalent of worker pods in the Kubernetes infrastructure, each
+code is running under a typical data science workload.
+The Dask Operator for Kubernetes was utilized to do this.
+A net advantage of this choice is that it can be reproduced in Slurm-based
+infrastructure.
+This possibility allows for meaningful comparison between bare metal and
+Kubernetes tests.
+The Dask Operator is a Kubernetes operator that manages Dask clusters. Removing
+the Kubernetes abstraction, it is possible to spawn a Dask orchestrator that
+interacts with SLURM to create a "cluster" object, a collection of "worker"
+objects.
+These workers are the equivalent of worker pods in the Kubernetes infrastructure, each
 of which is a separate process with a fixed amount of assigned resources. In
-this test, we started with a single worker with one core and 3GB of RAM and
-progressively increased the total number of workers to evaluate the weak
+this test, we started with a single worker with one core and all the available
+RAM and progressively increased the total number of cores (and workers when the
+number of cores exceeded the 24 available on THIN nodes) to evaluate the weak
 scalability.
-Before delving into the results, it is essential to note that the hardware of
-the Kubernetes cluster differs from that used in the bare metal evaluation due
-to physical constraints. To enable a meaningful comparison, we applied a
-normalization process. We assumed that running one application inside a
-container \cite{deochake2023}   would not significantly impact the application's
-performance. Therefore, all the values from the bare metal evaluation were
-divided by a constant term. This term was defined as the factor by which the
-1-core bare metal result must be divided to match the 1-core Kubernetes result.
-Hence, the following results are not meant to be used to compare the performance
-of the two infrastructures but to evaluate the scalability of the code in the
-Kubernetes cluster and prove that the cloud-compliant implementation of the
+
+The following results are meant to be used to compare the performance
+of the two infrastructures and to evaluate the scalability of the code in the
+Kubernetes cluster proving that the cloud-compliant implementation of the
 cluster can scale as effectively as the bare metal one.
 The following figure (Figure \ref{fig:summary-dask_en}) shows the results of the
 evaluation of some of the most common operations performed on arrays:
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.8\textwidth]{img/abstract/summary-dask}
-  \caption{Performance evaluation result of Dask for some of the most common operations applied to arrays. Each benchmark was run 30 times, and the average value was considered. These results, in particular, were obtained considering two-dimensional arrays.}
+  \includegraphics[width=\textwidth]{img/abstract/summary-dask}
+  \caption{Performance evaluation result of Dask for some of the most common
+    operations applied to arrays. Each benchmark was run 30 times, and the
+    average value was considered. These results, in particular, were obtained
+    considering two-dimensional arrays.}
   \label{fig:summary-dask_en}
 \end{figure}
 
-From these very preliminary results, the code scalability in the proposed
-Kubernetes setting is comparable to that obtained in the bare metal evaluation.
+From these  results, the code scalability in the proposed Kubernetes setting is
+comparable to that obtained in the bare metal evaluation, with the only notable
+exception of communication bounded problem such as the sum of the transposed
+matrix.
 This is a promising result, as it shows that the proposed solution can fully
-exploit the cluster resources, allowing the users to run parallel computation.
-Moreover, it seems that using the Kubernetes cluster in our experiments leads to
-better results (always considering the normalization processes). An explanation
-could be that using the KUBECluster Dask object to create the cluster permits an
-intelligent distribution of the workers on the nodes. For example, setting the
-"PodAffinity" properly it is possible to ensure that the workers are scheduled
-to fill an entire node before moving to the next one, reducing the communication
-between the nodes as much as possible. In the bare metal evaluation in contrast,
-the workers were created using the Dask SLURMCluster object, which allocates the
-resources using an automatically generated script that uese the "sbatch" command
-of the SLURM workload manager. In this second situation, the slurm manager is
-responsible for distributing the workers on the nodes, and it is impossible to
-establish any affinity between the workers and the nodes.As a result, workers
-can be effectively distributed among all the nodes that make up the SLURM
-partition of chioice. This distribution leads to a higher level of communication
-between the nodes, potentially explaining the overall lower performance.
+exploit the cluster resources, allowing the users to run parallel computations.
+The results highlighted some criticism in tasks which require a lot of
+communication, but other that those case, the Kubernetes cluster can be a valid
+alternative to the traditional HPC infrastructure since the performance is
+absolutely comparable with the bare metal one.
 
 \section*{Conclusion}
 

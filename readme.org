@@ -4,8 +4,8 @@
 
 * Road map
 
-- [-] ~Abstract~ (eng + ita)
-  - [ ] *TODO*: riscrivere la parte di commento ai risultati ottenuti
+- [X] ~Abstract~ (eng + ita)
+  - [X] *TODO*: riscrivere la parte di commento ai risultati ottenuti
   - [X] Traduzione in italiano
 - [X] ~Introduzione~ - 3 pag.:
   * Review dello stato dell'arte - 3 pag.

@@ -215,7 +215,124 @@ utilizzati.
 
 \section*{Risultati principali}
 
-RISCRIVERLA PERCHÈ  I TEST SONO CAMBIATI SE LI FACCIAMO SULLO STESSO HARDWARE
+Innanzitutto una premessa importante per la sezione seguente: con l'espressione
+"bare metal" si intende l'hardware fisico dei nodi nella partizione THIN del
+cluster ORFEO, composto da macchine dotate di due Intel Xeon Gold 6126, 768 GiB
+di RAM e, per questo studio, una scheda di rete da 25 Gb. Nel caso di Kubernetes
+la configurazione hardware è la stessa del bare metal.
+In questo secondo caso, infatti, sono stati utilizzati 3 nodi THIN per creare un
+cluster Kubernetes, composto da un control plane e due nodi ``worker''.
+
+Come accennato nella sezione metodologica, la prima valutazione si è incentrata
+nel valutare le prestazioni di rete.
+In particolare, la latenza e la bandwidth della rete sono state misurate per
+determinare quale dei plugin CNI considerati abbia le migliori prestazioni.
+L'esperimento è stato condotto per valutare sia la latenza minima che la
+badnwidth massima raggiungibile dalla rete.
+Poiché tutte le funzionalità che rendono Kubernetes una soluzione cisì
+desiderabile richiedono che il piano di controllo interagisca con i pod che
+amministra e la connessione tra i pod viene ottenuta collegando loro
+un'interfaccia di rete virtuale, si prevede che il plugin CNI avrà un impatto
+significativo sulle prestazioni di rete.
+
+Dai dati presentati nella Figura \ref{fig:summary-osu_it}, è evidente che il
+layer appena introdotto aggiunge una latenza sostanziale alla comunicazione.
+La degradazione delle performance dipende fortemente dal plugin e varia da circa
+1,79 a 3,25 volte rispetto al caso ``bare metal'' preso come baseline.
+Tra i plugin studiati, visti i risultati ottenuti, Cilium si presenta come
+l'alternativa migliore, almeno con le configurazioni di default utilizzate.
+Queste maggiori prestazioni sono con gran probabilità dovute all'adozione del
+nuovo dataplane eBPF che evita alcune elaborazioni del pacchetto di rete da
+parte del netfilter.
+ Al secondo posto c'è Calico, che, con la configurazione standard,
+si comporta in modo simile all'ultimo Flannel.
+Entrambe le soluzioni sono probabilmente ostacolate dall'incapsulamento richiesto nel
+passaggio VXLAN su cui si basano (Flannel) e per l'utilizzo di iptables per le
+funzioni di loadbalancing (Calico).
+Al contarario, quando si prende come riferimento la bandwidth, Flannel è quello
+che tra i vari candidati è riuscito a riportare i risultati più elevati nelle
+misuraioni.
+Tuttavia, in questo secondo caso, la differenza tra i plugin è
+quasi trascurabile.
+Il valore raggiunto alla convergenza è probabilmente dettato da
+limiti interni in atto per garantire un uso equo delle risorse, come la
+larghezza di banda, in scenari in cui l'obiettivo principale è garantire a
+ciascun pod una discreta quantità di traffico.
+Concentrandoci sulla seconda colonna, vediamo come la comunicazione pod-to-pod
+venga rallentata e l'overhead introdotto dal software stack di kubernetes sia
+estremamente impattante.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{img/abstract/summary-osu}
+  \caption{Risultati di Osu Micro-Benchmarks. La riga superiore mostra la
+    latenza registrata (più basso il valore, meglio è) per diversi CNI in
+    funzione della dimensione del messaggio MPI mandato e ricevuto.
+    La riga inferiore mostra l'andamento della bandwidth (valori più alti sono
+    migliori) per lo stesso set di configurazioni, sempre al variare della
+    dimensione del messaggio trasmesso.
+    La prima colonna mostra il risultato nella comunicazione da nodo a nodo
+    mentre la seconda è il risultato della comunicazione pod-to-pod nello stesso
+    nodo confrontato con i processi mpi sullo stesso dispositivo nel caso bare metal.
+    Tutti i benchmark sono stati eseguiti 30 volte ed è quindi stata considerata
+    la media di tutte le misurazioni.}
+    \label{fig:summary-osu_it}
+\end{figure}
+
+Una volta stabilito che il plugin cilium CNI era la scelta più allettante,
+il passo successivo è stato valutare le prestazioni dell'infrastruttura su cui il
+codice è in esecuzione in un tipico carico di lavoro simulando operazioni
+comunemente svolte nell'ambito dell data science.
+
+Per fare questo è stato utilizzato il Dask Operator per Kubernetes.
+Il vantaggio netto di questa scelta è che in questo modo lo stesso codice può
+essere riprodotta in un'infrastruttura basata su Slurm e su Kubernetes allo
+stesso modo.
+Questa possibilità consente un confronto significativo tra test bare metal e
+Kubernetes.
+Il Dask Operator è un operatore Kubernetes che gestisce i cluster Dask.
+Rimuovendo l'astrazione Kubernetes, è possibile generare un Dask client che
+interagisce con SLURM per creare un oggetto "cluster", una raccolta di oggetti "worker".
+Questi worker sono l'equivalente dei worker pod nell'infrastruttura Kubernetes,
+ognuno dei quali è un processo separato con una quantità fissa di risorse assegnate.
+In questo test, abbiamo iniziato con un singolo worker con un core e tutta la
+RAM disponibile e abbiamo aumentato progressivamente il numero totale di core (e
+worker quando il numero di core superava i 24 disponibili sui nodi THIN) per
+valutare la scalabilità debole.
+
+
+I seguenti risultati possono essere utilizzati per confrontare le prestazioni
+delle due infrastrutture e per valutare la scalabilità del codice nel
+cluster Kubernetes, dimostrando che l'implementazione cloud-based
+del cluster può scalare in modo efficace quanto quella bare metal.
+La figura \ref{fig:summary-dask_it}) mostra i risultati della
+valutazione di alcune delle operazioni più comuni eseguite sugli array:
+
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{img/abstract/summary-dask}
+  \caption{Risultato della valutazione delle prestazioni di Dask per alcune
+    delle operazioni più comuni applicate agli array.
+    Ogni benchmark è stato eseguito 30 volte e il valore medio è stato
+    considerato.
+    Questi risultati, in particolare, sono stati ottenuti considerando array
+    bidimensionali.}
+  \label{fig:summary-dask_it}
+\end{figure}
+
+Da questi risultati, la scalabilità del codice nell'impostazione Kubernetes proposta è
+comparabile a quella ottenuta nella valutazione bare metal, con l'unica
+eccezione degna di nota di problem ``communication bounded'' come nell'esempio
+riportato della somma della matrice con la sua trasposta.
+Questo è un risultato promettente, poiché mostra che la soluzione proposta può
+sfruttare appieno le risorse del cluster, consentendo agli utenti di eseguire
+calcoli paralleli.
+I risultati hanno evidenziato alcune critiche nelle attività che richiedono molta
+comunicazione, ma a parte questo, il cluster Kubernetes può essere una valida
+alternativa all'infrastruttura HPC tradizionale poiché le prestazioni sono
+assolutamente paragonabili a quelle bare metal.
 
 
 \section*{Conlcusioni}
