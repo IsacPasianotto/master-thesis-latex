@@ -511,10 +511,40 @@ Kubernetes cluster to perform HPC-like tasks.
   \label{fig:latency-mp-2-nodes}
 \end{figure}
 
+The differences in the communication method used when being in a single node
+scenario and a dual node scenario are better presented in
+fig.~\ref{fig:cilium-latency} where we restricted our attention to the Cilium
+CNI and the bare metal. Cilium was chosen for the good results observed in the
+other analysis. In the plot, we can identify two regimes: one at high
+performance with only one contribution and one slower, with three curves. The
+only contribution to the first regime is the latency in the single node bare
+metal scenario that we put as a reference for the best reference. The latter has
+three curves, two contributions from Cilium and one for the bare metal when the
+packages travel across the networks. This difference in the behavior is the
+consequence of what was previously mentioned: while in the bare metal case, the
+communication is done through shared memory, hence the transition from the
+single node to the multi-node involves a change in the communication protocol,
+in the Kubernetes case the communication is always done through the same
+mechanisms, so the difference between the single and multi-node case is entirely
+due to the extra steps introduced by the physical network. It is remarkable how
+once inter-node communication is involved, the behaviors flatten, and different
+approaches equal one another.
 
+To verify the assumption that by removing the network layer, even in the
+Kubernetes case, it is possible to reach bare metal performance, we created one
+container and spawned the MPI processes within it. In this situation, the
+communication between the processes must go through shared memory as in the bare
+metal case, and we measured a latency within the error bars of the bare metal
+case \footnote{See table \ref{tab:latency-mp-one-pod} in appendix
+\ref{appendix:osu} for quantitative results.}.
 
-XXXX
-
+In general, the communication between pods in the same node is meant for
+applications with a high latency tolerance. If this is not the case and
+performance is the priority, hence putting the various components of an
+application in different pods is logically wrong, and the best choice is to use
+a single pod with all the needed containers inside. In this way, all the
+processes will be able to communicate through a shared memory without the need
+to consult Kubernetes to know how to reach each other.
 
 \begin{figure}
   \centering
@@ -524,24 +554,14 @@ XXXX
   \label{fig:cilium-latency}
 \end{figure}
 
-
-The results of the tests are pretty extensive, in order to avoid the cluttering
-the text, only a brief summary of the results will be provided, taking one
-example for each category of tests (latency and bandwidth).
-
-to give an
-idea of the results obtained, which will be reported in this section.
-
-For the sake of completeness, the results of all the tests are available in a
-dedicated report that was not attached to this thesis for its size.  The report
-is available in the public repository of the thesis at the following link:
-
-\footnote{\url{https://github.com/IsacPasianotto/master-thesis/blob/main/appendixB-osu_results/report.pdf}.}
-
-Moreover, to help the reader to follow the results, all the numerical results
-presented graphically in this section are available in the appendix
-\ref{appendix:osu}.
-
+The totality of the performance test performed goes beyond what has been
+presented here. To avoid confusion, we presented only a subset of them. For the
+sake of completeness, the results of all the tests are available in a dedicated
+supplementary material report \footnote{ The supplementary material can be
+obtained at the following
+link\url{https://github.com/IsacPasianotto/master-thesis/blob/main/appendixB-osu_results/report.pdf}.}.
+Moreover, all the numerical results in this section are available in the
+appendix \ref{appendix:osu}.
 
 % Accordingly how LaTeX render this part comment or not that:
 \clearpage
