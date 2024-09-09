@@ -568,28 +568,25 @@ appendix \ref{appendix:osu}.
 
 \subsection{Bandwidth}\label{subsec:results-bandwidth}
 
-Alongside latency, another vital aspect to consider when assessing the
-performance of a network is bandwidth.
-Like in the previous section, in figure \ref{fig:bibw-1-node} and
-\ref{fig:bibw-2-nodes} are reported the results of the \texttt{osu\_bibw}
-benchmark performed on a single node (\ref{fig:bibw-1-node}) and on two nodes
-(\ref{fig:bibw-2-nodes})\footnote{
-  Data for the one node case can be consulted in
-  tables \ref{tab:bibw-baremetal-1nodes}, \ref{tab:bibw-calico-1nodes},
-  \ref{tab:bibw-flannel-1nodes}, and \ref{tab:bibw-cilium-1nodes}, while data
-  for the two nodes case are available in tables
-  \ref{tab:bibw-baremetal-2nodes}, \ref{tab:bibw-calico-2nodes},
-  \ref{tab:bibw-flannel-2nodes}, and \ref{tab:bibw-cilium-2nodes} at appendix
-  \ref{appendix:osu}.
-}.
+Alongside latency, another aspect to consider when assessing the performance of
+a network is bandwidth. Like in the previous section, in
+fig.~\ref{fig:bibw-1-node} and \ref{fig:bibw-2-nodes} are reported the results
+of the \texttt{osu\_bibw} benchmark performed on a single node
+(\ref{fig:bibw-1-node}) and on two nodes (\ref{fig:bibw-2-nodes})\footnote{Data
+for the one node case can be consulted in tables
+\ref{tab:bibw-baremetal-1nodes}, \ref{tab:bibw-calico-1nodes},
+\ref{tab:bibw-flannel-1nodes}, and \ref{tab:bibw-cilium-1nodes}, while data for
+the two nodes case are available in tables \ref{tab:bibw-baremetal-2nodes},
+\ref{tab:bibw-calico-2nodes}, \ref{tab:bibw-flannel-2nodes}, and
+\ref{tab:bibw-cilium-2nodes} at appendix \ref{appendix:osu}.}.
 
-Regarding the single node case, considerations similar to the one made for the
-latency case can be made about the gap between the bare metal case and all the
-Kubernetes cases.
-In this case, the difference between the different solutions still not be vast
-enough to discard a priori a certain CNI plugin; however, what is interesting to
-note is that also, in this case, there is always a best performer (Cilium), and
-a worst one (Calico) independently from the message size.
+% Regarding the single node case, considerations similar to the one made for the
+% latency case can be made about the gap between the bare metal case and all the
+% Kubernetes cases.
+% In this case, the difference between the different solutions still not be vast
+% enough to discard a priori a certain CNI plugin; however, what is interesting to
+% note is that also, in this case, there is always a best performer (Cilium), and
+% a worst one (Calico) independently from the message size.
 
 \begin{figure}
   \centering
@@ -599,16 +596,35 @@ a worst one (Calico) independently from the message size.
   \label{fig:bibw-1-node}
 \end{figure}
 
-The analysis of the other case (inter-node communication) is also fascinating.
-Once again, the Cilium CNI outperforms the other candidate for small-size
-messages, reaching a bandwidth extremely close to the bare metal case.
-Similar to the previous case, the BGP routing strategy of the Calico CNI plugin
-appears to be the least convenient way to saturate the network, resulting in the
-slowest independent form of the message size.
-Flannel starts performing poorly for small messages. However, as the message
-size increases, the overhead introduced by the encapsulation/decapsulation
-process remains constant, making it more negligible and letting the plugin
-overtake Cilium for more prominent messages.
+In the single node case (fig.~\ref{fig:bibw-1-node}), it is possible to make
+similar considerations to those in the latency breakdown. As previously noted,
+also in this case, the gap between the bare metal case and all the Kubernetes
+cases is due to the difference in the communication method. The bare metal can
+use direct memory communication, while Kubernetes adds an extra networking
+layer. When comparing bandwidths, the difference between the different CNIs is
+negligible; however, what is interesting to note is that Cilium keeps being the
+best performer, even if by a margin. Calico, on the other hand, performs worst
+independently of the message size. In the inter-node communication case
+(fig~\ref{bibw-2-nodes}) the Cilium CNI outperforms the other candidates but
+only for small-size messages, reaching a bandwidth extremely close to the bare
+metal case. Similar to the previous case, the BGP routing strategy of the Calico
+CNI plugin appears to be the least convenient way to saturate the network,
+resulting in the slowest independent form of the message size. Flannel starts
+performing poorly for small messages, however, as the message size increases,
+the overhead introduced by the encapsulation/decapsulation process remains
+constant, making it more negligible and letting the plugin overtake Cilium for
+more prominent messages.
+
+% The analysis of the other case (inter-node communication) is also fascinating.
+% Once again, the Cilium CNI outperforms the other candidate for small-size
+% messages, reaching a bandwidth extremely close to the bare metal case.
+% Similar to the previous case, the BGP routing strategy of the Calico CNI plugin
+% appears to be the least convenient way to saturate the network, resulting in the
+% slowest independent form of the message size.
+% Flannel starts performing poorly for small messages. However, as the message
+% size increases, the overhead introduced by the encapsulation/decapsulation
+% process remains constant, making it more negligible and letting the plugin
+% overtake Cilium for more prominent messages.
 
 % \begin{figure}
 \begin{figure}[H]
