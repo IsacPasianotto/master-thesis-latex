@@ -637,86 +637,137 @@ more prominent messages.
 
 \section{Final considerations}\label{sec:final-considerations}
 
-The results of the measurements conducted in this chapter led to the final
-decision to adopt the Cilium CNI plugin as the most promising candidate for the
-infrastructure this thesis claims to deploy for the execution of HPC-like tasks.
-The choice was made primarily considering the fact that this plugin was never
-the more mediocre one in any of the tests performed.
+% The results of the measurements conducted in this chapter led to the final
+% decision to adopt the Cilium CNI plugin as the most promising candidate for the
+% infrastructure this thesis claims to deploy for the execution of HPC-like tasks.
+% The choice was made primarily considering the fact that this plugin was never
+% the more mediocre one in any of the tests performed.
 
-Flannel was the CNI plugin that delivered the highest bandwidth in multi-node
-communication (the most critical and common scenario in any HPC-like
-application). However, his latency performance was less satisfying independently
-from the message size, up to the point that it doubled/triplicated the time to
-perform the same ping pong test compared to the bare-metal case.
-In addition, the lack of official, well-structured documentation and the
-necessity of relying only on community support made the choice of Flannel the
-less appetitive one and the first to be discarded.
+% Flannel was the CNI plugin that delivered the highest bandwidth in multi-node
+% communication (the most critical and common scenario in any HPC-like
+% application). However, his latency performance was less satisfying independently
+% from the message size, up to the point that it doubled/triplicated the time to
+% perform the same ping pong test compared to the bare-metal case.
+% In addition, the lack of official, well-structured documentation and the
+% necessity of relying only on community support made the choice of Flannel the
+% less appetitive one and the first to be discarded.
 
-Calico, on the other side, was the solution that won the competition for the
-multi-node test latency at the end of the message size spectrum, but it was
-arguably the worst performer for the bandwidth test.
-However, this superior performance in latency is significant only for huge
-message size (greater than 1 MB), which may not be enough to justify all the
-costs in terms of bandwidth that the plugin introduces, and the more significant
-latency in smaller messages.
+% Calico, on the other side, was the solution that won the competition for the
+% multi-node test latency at the end of the message size spectrum, but it was
+% arguably the worst performer for the bandwidth test.
+% However, this superior performance in latency is significant only for huge
+% message size (greater than 1 MB), which may not be enough to justify all the
+% costs in terms of bandwidth that the plugin introduces, and the more significant
+% latency in smaller messages.
 
-Since no detailed assumption was made about the kind of HPC workloads that will
-be executed on the infrastructure (like distribution of message sizes
-frequency), it can be considered wise to adopt the more balanced solution, which
-is the Cilium CNI plugin.
-Despite not being the best performer for a more significant number of exchanged
-bytes, it was always the second best with a minimal gap from the winner.
-Moreover, in the situations in which it was the best performer, which are the
-small messages and all the cases of intra-node communication, the difference
-concerning the bare metal case was far less than the other CNIs, which means
-that the overhead introduced by the plugin is minimal.
+% Since no detailed assumption was made about the kind of HPC workloads that will
+% be executed on the infrastructure (like distribution of message sizes
+% frequency), it can be considered wise to adopt the more balanced solution, which
+% is the Cilium CNI plugin.
+% Despite not being the best performer for a more significant number of exchanged
+% bytes, it was always the second best with a minimal gap from the winner.
+% Moreover, in the situations in which it was the best performer, which are the
+% small messages and all the cases of intra-node communication, the difference
+% concerning the bare metal case was far less than the other CNIs, which means
+% that the overhead introduced by the plugin is minimal.
 
-In addition to that, the Cilium project has a well-structured and complete
-documentation, which can be very useful in solving any possible issue and tuning
-the configuration to perform even better than the out-of-the-box configuration.
-Even if it alone is not a sufficient reason to choose a solution, it is worth
-mentioning that together with his eBPF-based CNI plugin, the Cilium project
-deliver also a handy command line tool, invokable via the \texttt{cilium}
-command, which can be used to monitor, configure, and troubleshoot the network
-effortlessly and intuitively making the management less painful and more
-efficient.
+% In addition to that, the Cilium project has a well-structured and complete
+% documentation, which can be very useful in solving any possible issue and tuning
+% the configuration to perform even better than the out-of-the-box configuration.
+% Even if it alone is not a sufficient reason to choose a solution, it is worth
+% mentioning that together with his eBPF-based CNI plugin, the Cilium project
+% deliver also a handy command line tool, invokable via the \texttt{cilium}
+% command, which can be used to monitor, configure, and troubleshoot the network
+% effortlessly and intuitively making the management less painful and more
+% efficient.
 
-For all these reasons, the Cilium CNI plugin was chosen as the most promising
-candidate to be used in the infrastructure object of this thesis, and it will be
-the CNI plugin used in the next chapter to show a case of study of a complete
-parallel code execution on the Kubernetes cluster.
+% For all these reasons, the Cilium CNI plugin was chosen as the most promising
+% candidate to be used in the infrastructure object of this thesis, and it will be
+% the CNI plugin used in the next chapter to show a case of study of a complete
+% parallel code execution on the Kubernetes cluster.
 
-It must said that the results obtained, despite being quite encouraging,
-highlights that an approach like the one proposed in this thesis to use a
-container orchestrator to perform HPC-like tasks from a strictly
-performance-focused point of view can be considered a step back from the
-traditional systems labeled bare metal in this discussion.
-Considering the chosen CNI plugin, Cilium, the pick of the bandwidth reached
-1711.73 MB/s, which is just over half of the 3006.66 MB/s obtainable by
-scheduling the same code on the same hardware with SLURM.
-The case of the latency is analog, where the 44.37 $\mu$s are a third more than
-the 32.75 $\mu$s obtainable with the traditional approach, and the gap gets
-wider as the number of exchanged bytes increases: 4588.27 $\mu$s against the
-1998.00 $\mu$s of the baseline for 4194304 \texttt{MPI\_CHAR}.
+In this chapter, we benchmarked different CNIs plugins with the OSU benchmark
+typically performed to validate HPC infrastructures. Flannel was the CNI plugin
+that delivered the highest bandwidth in multi-node communication (the most
+critical and common scenario in any HPC-like application), but only by a margin.
+However, his latency performance was less satisfying regardless of the message
+size. In particular, performing the ping-pong test in the inter-node scenario
+took up to three times more time than the bare metal. In addition, the lack of
+official, well-structured documentation and the necessity of relying only on
+community support made the choice of Flannel the less appetitive one and the
+first to be discarded. On the other hand, Calico is almost at a pair in
+performance with Cillium, slightly faster in the multi-node test latency for big
+messages and slower with small messages. It has a similar bandwidth to Cillium
+for large messages and a lower bandwidth for small messages. Finally, Cilium
+showed the best performance overall. 
+
+In addition to the performance, the Cilium project has well-structured and
+complete documentation. This documentation has proven to be helpful in solving
+issues and offers excellent cues to tune the configuration to perform better
+than the out-of-the-box configuration used in this word. Furthermore, the Cilium
+project offers a handy command line tool that we have extensively used to
+monitor, configure, and troubleshoot the network effortlessly and intuitively,
+making the management less painful and more efficient. These combined features
+make Cillium the most promising candidate for infrastructures that want to
+handle HPC workloads in a cloud environment.
+
+% It must said that the results obtained, despite being quite encouraging,
+% highlights that an approach like the one proposed in this thesis to use a
+% container orchestrator to perform HPC-like tasks from a strictly
+% performance-focused point of view can be considered a step back from the
+% traditional systems labeled bare metal in this discussion.
+% Considering the chosen CNI plugin, Cilium, the pick of the bandwidth reached
+% 1711.73 MB/s, which is just over half of the 3006.66 MB/s obtainable by
+% scheduling the same code on the same hardware with SLURM.
+% The case of the latency is analog, where the 44.37 $\mu$s are a third more than
+% the 32.75 $\mu$s obtainable with the traditional approach, and the gap gets
+% wider as the number of exchanged bytes increases: 4588.27 $\mu$s against the
+% 1998.00 $\mu$s of the baseline for 4194304 \texttt{MPI\_CHAR}.
+
+% However, as seen in sections \ref{sec:chpt1-orchestrator} and
+% \ref{sec:chpt1-kubernetes}, the Kubernetes orchestrator brings many benefits
+% that can be worth the slight loss in performance.
+% In particular, the autoscaling feature can be handy in a scenario where the
+% workload is not constant and can vary a lot in time, overcoming the rigidity of
+% the traditional resource allocation in which the resources are asked at the
+% beginning of the job and are kept until the end, even if they are not needed
+% anymore.
+
+We must observe that, despite being quite encouraging, the obtained results
+highlight that an approach like the one proposed in this thesis to use a
+container orchestrator such as Kubernetes to perform HPC-like tasks from a
+strictly performance-focused point of view can be considered a step back from
+the traditional systems labeled bare metal in this discussion. Considering the
+chosen CNI plugin, Cilium, the pick of the bandwidth reached 1.7 GB/s, which is
+just over half of the 3.0 GB/s obtainable by scheduling the same code on the
+same hardware with SLURM. The case of the latency is analog, where the 44.37
+$\mu$s are a third more than the 32.75 $\mu$s obtainable with the traditional
+approach, and the gap gets broader as the number of exchanged bytes increases:
+4.6 ms against the 2.0 ms of the baseline for $4\mathrm{e}{6}$
+\texttt{MPI\_CHAR}.
 
 However, as seen in sections \ref{sec:chpt1-orchestrator} and
 \ref{sec:chpt1-kubernetes}, the Kubernetes orchestrator brings many benefits
-that can be worth the slight loss in performance.
-In particular, the autoscaling feature can be handy in a scenario where the
-workload is not constant and can vary a lot in time, overcoming the rigidity of
-the traditional resource allocation in which the resources are asked at the
-beginning of the job and are kept until the end, even if they are not needed
-anymore.
+that can be worth the slight loss in performance. In particular, the autoscaling
+feature can be handy in a scenario where the workload is not constant and can
+vary a lot in time, overcoming the rigidity of the traditional resource
+allocation in which the resources are asked at the beginning of the job and are
+kept until the end, even if they are not needed anymore.  In the next chapter,
+chapter \ref{chpt:dask}, we will show an example of a typical workload in modern
+distributed computation frameworks, with the intent of investigating if the
+tradeoff between all the benefits the Kubernetes orchestrator brings as a
+scheduler and the slight loss in performance is worth or not.
 
-While in the case of an HTC (High Throughput Computing) workload, this slight
-loss in network performance is absolutely acceptable, since the parallelization
-is done performing multiple independent tasks, and the communication between the
-independent worker is minimal, a more careful evaluation is needed in the cases
-in which the communication between the workers is more frequent, and the
-tolerance threshold for the latency is lower.
+% This is a little random:
+% While in the case of an HTC (High Throughput Computing) workload, this slight
+% loss in network performance is absolutely acceptable, since the parallelization
+% is done performing multiple independent tasks, and the communication between the
+% independent worker is minimal, a more careful evaluation is needed in the cases
+% in which the communication between the workers is more frequent, and the
+% tolerance threshold for the latency is lower.
 
-The next chapter, chapter \ref{chpt:dask}, will show an example of a complete
-simulation of workloads typical in modern distributed computation frameworks,
-with the intent of investigating if the tradeoff between all the benefits the
-Kubernetes orchestrator brings as a scheduler and the slight loss in performance
-is worth or not.
+% In the next chapter, chapter \ref{chpt:dask}, we will show an example of a
+% typical workload in modern distributed computation frameworks, with the intent
+% of investigating if the tradeoff between all the benefits the Kubernetes
+% orchestrator brings as a scheduler and the slight loss in performance is worth
+% or not.
