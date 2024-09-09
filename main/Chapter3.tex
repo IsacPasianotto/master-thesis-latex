@@ -1,104 +1,136 @@
 \chapter{CNIs comparison and assessment}\label{chpt:osu}
 
-This chapter will be entirely dedicated to explaining in detail the criteria and
-methodologies adopted to compare the different CNIs analyzed in section
-\ref{sec:node2node} to assess their performance and pick the most promising one.
+% This chapter is dedicated to explaining in detail the criteria and
+% methodologies adopted to compare the different CNIs analyzed in section
+% \ref{sec:node2node} to assess their performance and pick the most promising one.
 
-One initial remark that should be remembered throughout the chapter is that all
-the tests were performed on a freshly installed Kubernetes cluster with the CNI
-plugin under test being initialized with the default configuration.
-This means that the results obtained are not necessarily correct in absolute
-terms. All the considered options are widely configurable and tunable to fit
-specific situations better.
+% One initial remark that should be remembered throughout the chapter is that all
+% the tests were performed on a freshly installed Kubernetes cluster with the CNI
+% plugin under test being initialized with the default configuration.
+% This means that the results obtained are not necessarily correct in absolute
+% terms. All the considered options are widely configurable and tunable to fit
+% specific situations better.
 
-The main idea behind this choice is to pick the option that provides the best
-performance out of the box, and then tune it to improve it further.
-It could be the case that a discarded CNI could overtake the chosen one with the
-proper tuning, but this is out of the scope of this work. This first section
-aims to provide a reproducible and reliable comparison method that can be
-applied to any Kubernetes cluster to assess the performance of the CNIs under
-test. The same methodology could be used again to compare how different
-configurations of the same CNI plugin increase or decrease the overall
-performance.
+% The main idea behind this choice is to pick the option that provides the best
+% performance out of the box, and then tune it to improve it further.
+% It could be the case that a discarded CNI could overtake the chosen one with the
+% proper tuning, but this is out of the scope of this work. This first section
+% aims to provide a reproducible and reliable comparison method that can be
+% applied to any Kubernetes cluster to assess the performance of the CNIs under
+% test. The same methodology could be used again to compare how different
+% configurations of the same CNI plugin increase or decrease the overall
+% performance.
+
+This chapter will cover the benchmarking from an HPC workload perspective of the
+different CNIs described in the previous chapter to pinpoint the one that best
+suits HPC's needs. To perform all these tests, we always proceed from a freshly
+installed Kubernetes cluster and install the CNI plugin under the default
+configuration. Consequently, the results are a snapshot of how a standard
+configuration behaves, giving a fair representation of what every practitioner
+would start from. In general, all the CNIs discussed here are widely
+configurable and tunable to fit specific situations better, but this goes beyond
+the scope of this work. 
+
+In the first part of this chapter, we will explain how to run HPC workflows on
+Kubernetes and introduce the well-accepted OSU benchmark. Then, after deploying
+the infrastructure on bare metal, we will run the benchmarks focusing on latency
+and bandwidth. Finally, we will discuss the results, concluding which we believe
+to be the CNI that better fits the use case under consideration. 
 
 \section{Methodology}\label{sec:methodology}
 
-The entire benchmark is based on executing a ping-pong fashion MPI code.
-The Message Passing Interface (MPI) \cite{mpi41} is the de-facto standard for
-modern parallel programming. It is a specification for a standard library for
-message-passing defined by the MPI Forum, a broadly based group of parallel
+We went for a benchmark that performs a ping-pong using the MPI code for these
+tests. The Message Passing Interface (MPI) \cite{mpi41} is the de-facto standard
+for modern parallel programming. It is a specification for a standard library
+for message-passing defined by the MPI Forum, a broadly based group of parallel
 computer vendors, library writers, and applications specialists. Then, those
 standards are applied to many implementations; some are open-source, like
 OpenMPI and MPICH, while others are proprietary, such as Intel MPI and IBM
-Spectrum MPI.
-For this work, the choice of relying on a free and open-source implementation
-was made; hence, the final decision fell on OpenMPI, which is widely used and
-known in the scientific community.
+Spectrum MPI. For this work, we chose to rely on a free and open-source
+implementation; hence, the final decision fell on OpenMPI, which is widely used
+and known in the scientific community.
 
-Although writing an ad-hoc MPI code to perform this ping-pong test should be
-relatively easy, opting for a widely used and known benchmark undoubtedly leads
-to more comparable results. A well-known benchmark to test the network is the
-suite of tests provided by Ohio State University: the OSU Micro-Benchmarks
-\cite{osu}.
-This suite is a collection of MPI-based benchmarks written in C, Java, or Python
-(for this work, only the C version was used) that can be used to measure the
-hardware performance of a good variety of network interfaces and network stacks:
-InfiniBand, Omni-Path, Ethernet RoCE, and Slingshot.
-Although the OSU benchmarks were created to compare the performance of different
-hardware, they can also be used in different scenarios, like this case study.
-The main idea is to repeat the same test on the same hardware with different CNI
-plugins; in this way, it will be possible to provide a quantitative comparison
-of the overhead introduced by the different CNIs and the impact on the overall
-performance of the cluster.
+Although writing an ad-hoc MPI code to perform this ping-pong test is relatively
+easy, we opted for a widely used and well-known benchmark that produces results
+that can be easily reproduced and compared with the literature. The benchmark we
+chose to test the network is the suite of tests provided by Ohio State
+University: the OSU Micro-Benchmarks \cite{osu}. This suite is a collection of
+MPI-based benchmarks written in C, Java, or Python (for this work, only the C
+version was used) that can be used to measure the hardware performance of a good
+variety of network interfaces and network stacks: InfiniBand, Omni-Path,
+Ethernet RoCE, and Slingshot. Although the OSU benchmarks were created to
+compare the performance of different hardware, they can also be used in other
+scenarios, like this case study. The main idea is to repeat the same test on the
+same hardware with different CNI plugins; in this way, it will be possible to
+provide a quantitative comparison of the overhead introduced by the different
+CNIs and the impact on the overall performance of the cluster.
 
-The process to perform the tests is quite simple: a couple of pods will be
-spawned; each pod will contain a container with a copy of the compiled binaries
-of the OSU benchmark and a process to run those binaries.
-Those two pods will be scheduled both on the same node and then on different
-nodes; this can be achieved in Kubernetes with the
-\texttt{spec.topologySpreadConstraints} field in the pod definition
-\cite{kdoc-topologyconstraints}.
-
-During the initialization of any MPI program, with the function
-\texttt{MPI\_Init()}, every process is informed about the existence of the
-others, their rank, and most importantly, how to reach them for the needed
-communication. In particular, the MPI library achieves the latter by knowing the
-other nodes' IP address or a resolvable hostname.
-This may be commonplaces in a traditional HPC cluster, where the nodes are all
+The process to perform the tests is as follows: two pods are spawned; each pod
+will contain a container with a copy of the compiled binaries of the OSU
+benchmark and a process to run those binaries. Those two pods will be scheduled
+both on the same node and then on different nodes; this can be achieved in
+Kubernetes with the \texttt{spec.topologySpreadConstraints} field in the pod
+definition \cite{kdoc-topologyconstraints}. During the initialization of any MPI
+program, with the function \texttt{MPI\_Init()}, every process is informed about
+the existence of the others, their rank, and most importantly, how to reach them
+for the needed communication. In particular, the MPI library achieves the latter
+by knowing the other nodes' IP address or a resolvable hostname. This operation
+may be commonplace in a traditional HPC cluster, where the nodes are all
 connected to the same network and the hostname of the nodes is resolvable to the
 corresponding IP address. However, in the case of the setting described for
 assessing the Kubernetes connectivity plugins, this last part is more complex
-than in the traditional HPC scenario.
-Containers are isolated from the host and each other, and the hostname of a
-container is usually a random string, different at each restart.
-Moreover, by definition, each pod has its own Network Namespace. Hence, the IP
-address of a container is not reachable from another container unless some
-specific configuration is made (like the configuration of a \texttt{service}).
+than in the traditional HPC scenario. Containers are isolated from the host and
+each other, and the hostname of a container is usually a random string,
+different at each restart. Moreover, by definition, each pod has its own Network
+Namespace. Hence, the IP address of a container is not reachable from another
+container unless some specific configuration is made (like the configuration of
+a kubernetes \texttt{service}).
 
-A straightforward solution to this problem is relying on the Kubernetes
-\texttt{mpi-operator} developed by the KubeFlow community
-\cite{kubeflow-mpioperator}.
-This operator acts like a controller which allows to spawn a CRD (Custom
-Resource Definition) called \texttt{MPIJob} \cite{redhat-mpioperator} that
-creates the pods and sets up the communication between them.
-In this way, it should only specify how many replicas of a ``worker'' pod must
-be created. The operator will take care of the rest, spawning all of them plus
-one (or more) ``launcher'' pod that will submit the job and redirect the
-program's output executed by the workers in its logs.
-In this way, the programmer can write its MPI code as usual, without worrying
-about all the behind-the-scene stuff (SaaS approach), and have the containerized
-version of the code running on a Kubernetes cluster.
+% A straightforward solution to this problem is relying on the Kubernetes
+% \texttt{mpi-operator} developed by the KubeFlow community
+% \cite{kubeflow-mpioperator}.
+% This operator acts like a controller which allows to spawn a CRD (Custom
+% Resource Definition) called \texttt{MPIJob} \cite{redhat-mpioperator} that
+% creates the pods and sets up the communication between them.
+% In this way, it should only specify how many replicas of a ``worker'' pod must
+% be created. The operator will take care of the rest, spawning all of them plus
+% one (or more) ``launcher'' pod that will submit the job and redirect the
+% program's output executed by the workers in its logs.
+% In this way, the programmer can write its MPI code as usual, without worrying
+% about all the behind-the-scene stuff (SaaS approach), and have the containerized
+% version of the code running on a Kubernetes cluster.
 
-It was said that two pods would be spawned, each containing a running container
-with the OSU benchmark binaries. What remains to be clarified is how such a
-container is built.
-The entire process, which leads to the final image usable by the MPI operator,
-is quite simple and made by some modular steps that can be easily modified to
-replace the MPI distribution adopted or the code.
-The various steps (schematized in figure \ref{fig:mpi-container-creation}) are:
+A straightforward solution to this problem is to use the \texttt{mpi-operator}
+developed by the KubeFlow community \cite{kubeflow-mpioperator}. At installation
+time, this operator comes with a few Custom Resources Definitions (CRDs) that
+extend the Kubernetes API, adding support for new functionality. In particular,
+at runtime, the operator acts like a controller that monitors the resources of
+the new type \texttt{MPIJob} \cite{redhat-mpioperator}. Once the user creates a
+new MPIJob resource, the operator instantiates the pods requested in the
+resource, sets up the communication between them, and makes one (or more)
+``launcher'' pod that will submit the job and redirect the program's output
+executed by the workers in its logs. In this way, the programmer can write its
+MPI code as usual, without worrying about all the behind-the-scene stuff (SaaS
+approach), and have the containerized version of the code running on a
+Kubernetes cluster.
+
+% It was said that two pods would be spawned, each containing a running container
+% with the OSU benchmark binaries. What remains to be clarified is how such a
+% container is buil
+% The entire process, which leads to the final image usable by the MPI operator,
+% is quite simple and made by some modular steps that can be easily modified to
+% replace the MPI distribution adopted or the code.
+% The various steps (schematized in figure \ref{fig:mpi-container-creation}) are:
+
+We said we needed two pods containing a running container with the OSU benchmark
+binaries to perform the benchmark. What remains to be clarified is how such a
+container is built. The entire process, which leads to the final image usable by
+the MPI operator, is made by some modular steps that can be modified to replace
+the MPI distribution adopted or the code. The steps (schematized in figure
+\ref{fig:mpi-container-creation}) are:
 \begin{itemize}
   \itemsep0em
-  \item \textit{Builder container creation}: This container is meant to be used
+  \item \textit{Builder container creation}: This container image is meant to be used
     only to compile a given MPI-based code. It is just a minimal image (in this
     work, a \texttt{debian:bookworkm} image was used) with the necessary dev
     tools (like \texttt{gcc} and \texttt{make}) and the MPI library installed.
@@ -108,9 +140,9 @@ The various steps (schematized in figure \ref{fig:mpi-container-creation}) are:
     implementations of the MPI library is straightforward since this is the only
     image that needs to be changed.
 
-  \item \textit{Code provider container creation}: This container is meant to
+  \item \textit{Code provider container creation}: This container image is is meant to
     provide the MPI code to be executed. It can be a minimal image (for this
-    thesis again, a \texttt{debian:bookworkm} image was used) which
+    thesis again, a \texttt{debian:bookworm} image was used) which
     alternatively downloads the code from the internet (e.g., using
     \texttt{curl}/\texttt{wget} or cloning a git repository) alternatively, copy
     it from a mounted volume. In this work, the first approach was used, taking
@@ -138,7 +170,7 @@ The various steps (schematized in figure \ref{fig:mpi-container-creation}) are:
 
   \item \textit{execution on the Kubernetes cluster}: using a \texttt{MPIJob}
     CRD, the operator will spawn the pods and execute the code. The code output
-    will be redirected to the launcher pod logs so the user can easily check the
+    will be redirected to the launcher pod logs so the user can quickly check the
     results.
 \end{itemize}
 
@@ -568,4 +600,3 @@ simulation of workloads typical in modern distributed computation frameworks,
 with the intent of investigating if the tradeoff between all the benefits the
 Kubernetes orchestrator brings as a scheduler and the slight loss in performance
 is worth or not.
-
