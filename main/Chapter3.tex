@@ -249,50 +249,36 @@ All the nodes were uniformly configured with the same software stack to avoid
 possible data distortion. The operating system was freshly installed using
 Cobbler (a Linux installation automation tool for servers) to avoid any possible
 interference with previous installations.
+The software stack was composed by the components listed in table
+\ref{tab:softwarestack}.
 
-\begin{itemize}
-  \itemsep0em
-  \item \textit{Operating System}: \texttt{Fedora 40}. In particular, the Linux
-    kernel version (checked with \texttt{uname -rs}) was \texttt{Linux
-      9.12-200.fc40.x86\_64}.
-  \item \textit{Compiler}: The used compiled is the GNU Compiler (\texttt{gcc})
-    which was at version: \texttt{14.2.1 20240801 (Red Hat 14.2.1-1)}.
-  \item \textit{OpenMPI}: The OpenMPI library used to compile and run the OSU
-    benchmarks was the version \texttt{4.1.6rc4}.
-  \item \textit{Python}: The Python interpreter was directly compiled on the
-    used nodes. The version utilized was the \texttt{3.11.9}.
-  \item \textit{SLURM}: The workload manager used to allocate resources on the
-    nodes was the SLURM version \texttt{24.05.2}.
-  \item \textit{Container runtime}: The used container runtime
-    was\texttt{cri-o}, a lightweight container runtime that integrates with the
-    Kubernetes container orchestrator. The version used was the \texttt{1.28.2}.
-  \item \textit{Kubernetes}: The Kubernetes implementation was \texttt{k8s}, a
-    widely used minimal Kubernetes distribution that comes with almost anything
-    preconfigured. The version used was the last available at the time of
-    writing: \texttt{1.30.4}
-  \item \textit{CNI-plugins}: The CNIs were installed once at a time, rebooting
-    the node between the installation of the different plugins to avoid any
-    possible interference.
-    \begin{itemize}
-      \itemsep0em
-      \item \textit{Calico}: The release used for the installation is the
-        \texttt{v3.28.0}. The tigera operation, which was pulled to facilitate
-        the installing process, was at \texttt{1.34} version.
-      \item \textit{Cilium}: The deployed Cilium was the \texttt{v0.16.15}
-        release.
-      \item \textit{Flannel}: Flannel was installed with a manifest file, which
-        pulls a \\ \texttt{docker.io/flannel/Flannel:v0.25.4} image.
-        % new line because the long tt-string was going out of the page
-    \end{itemize}
-  \item \textit{MPI Operator}: To install the MPI operator it was used the
-    latest ``Release version'', that is at the moment of the writing the
-    \texttt{v0.5.0}.
-  \item \textit{Dask Operator}: Needed for the Dask tests presented in chapter
-    \ref{chpt:dask}, also this operator was installed. Like the previous cases,
-    the last available version was used, which is, in this case
-    \texttt{v.2024.7.1}
-\end{itemize}
-
+\begin{table}[H]
+  \centering
+  \begin{tabularx}{\linewidth}{p{0.225\textwidth}p{0.225\textwidth}X}  % Correct environment and column specification
+    \toprule
+    \textbf{Component} & \textbf{Name \& Version} & \textbf{Notes} \\
+    \midrule
+    O.S.              & \texttt{Fedora 40}           & Linux kernel: \texttt{9.12-200.fc40.x86\_64} \\
+    Compiler          & \texttt{gcc 14.2.1 20240801} & \texttt{(Red Hat 14.2.1-1)}   \\
+    MPI library       & \texttt{OpenMPI 4.1.6rc4}    &  \\
+    Python            & \texttt{Python 3.11.9}       & Directly compiled on the nodes using the \newline \texttt{-}\texttt{-enable-optimizations} flag. \\
+    Resource manager  & \texttt{SLURM 24.05.2}       & Used for the ``bare metal'' measurements \\
+    Container runtime & \texttt{cri-o 1.28.2}        &  \\
+    Kubernetes        & \texttt{k8s 1.30.4}          &  1 control plane node, 2 worker nodes\\
+    CNI-plugins       & \texttt{Calico 3.28.0}       & Installed with the \texttt{tigera-operator 1.34} \\
+    \                 & \texttt{Cilium 0.16.15}      & Installed with the \texttt{cilium install} command \\
+                      & \texttt{Flannel 0.25.4}      & Installed through a manifest which pulls the \texttt{docker.io/flannel/Flannel:v0.25.4} image. \\
+    MPI Operator      & \texttt{0.5.0}               &  \\
+    Dask Operator     & \texttt{2024.7.1}            & Needed for Dask tests presented in chapter \ref{chpt:dask} \\
+   \bottomrule
+  \end{tabularx}
+  \caption{Summary of the software stack used for the tests. All the components
+    were installed on the nodes uniformly using the latest stable version
+    available at the time of writing. The CNIs were installed one at a time,
+    rebooting the node between the installation of the different plugins to
+    avoid any possible interference.}
+  \label{tab:softwarestack}
+\end{table}
 
 \section{Results}\label{sec:cniresuls}
 
