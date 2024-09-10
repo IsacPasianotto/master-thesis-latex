@@ -493,47 +493,79 @@ be interpreted\footnote{Detailed numerical results will be reported in appendix
 
 \subsection{Arrays}
 
-The obtained results confirm the expectations that the array is the most
-performant collection of Dask: the scaling is quite satisfactory, and the time
-to execute the operation, even if it increases, does not explode like in the
-data frame case.
+% The obtained results confirm the expectations that the array is the most
+% performant collection of Dask: the scaling is quite satisfactory, and the time
+% to execute the operation, even if it increases, does not explode like in the
+% data frame case.
 
-The findings corroborate the hypothesis that the performance of a container
-orchestrated by Kubernetes is absolutely comparable to that of a job executed in
-bare metal with traditional HPC tools.
-The performance gap is negligible, and the results are almost identical. This
-should instill confidence in the comparison we've made.
+% The findings corroborate the hypothesis that the performance of a container
+% orchestrated by Kubernetes is absolutely comparable to that of a job executed in
+% bare metal with traditional HPC tools.
+% The performance gap is negligible, and the results are almost identical. This
+% should instill confidence in the comparison we've made.
 
-Also, in where a modest amount of communication is needed, like the case of
-row-wise reduction computation reported in figure
-\ref{fig:array-reduction-std-along-axis}\footnote{
-  Data are available in tables \ref{tab:baremetal-reduction-(std)-along-axis}
-  and\ref{tab:kube-reduction-(std)-along-axis} in appendix \ref{appendix:dask}.
-}, the performance are absolutely comparable and the overhead introduced by the
-Kubernetes orchestrator is negligible. The difference in the plotted points is
-more likely due to the intrinsic variability of the execution time of the tasks
-rather than to the different infrastructures used under the hood.
+% Also, in where a modest amount of communication is needed, like the case of
+% row-wise reduction computation reported in figure
+% \ref{fig:array-reduction-std-along-axis}\footnote{
+%   Data are available in tables \ref{tab:baremetal-reduction-(std)-along-axis}
+%   and\ref{tab:kube-reduction-(std)-along-axis} in appendix \ref{appendix:dask}.
+% }, the performance are absolutely comparable and the overhead introduced by the
+% Kubernetes orchestrator is negligible. The difference in the plotted points is
+% more likely due to the intrinsic variability of the execution time of the tasks
+% rather than to the different infrastructures used under the hood.
 
-The story changes when the workers' communication is more relevant, becoming the
-dominant aspect of the performed operation.
-We can see in the figurev\ref{fig:array-sum-transposed-matrix}\footnote{
-  Data are available in tables \ref{tab:baremetal-sum-the-transpose} and
-  \ref{tab:kube-sum-the-transpose} in appendix \ref{appendix:dask}.
-} how in the case of the sum of the transposed matrix, in the Kubernetes case,
-the rate of data processable per second drops immediately when the number of
-cores exceeds 24, forcing the scheduler to allocate the workers on different
-nodes and to exchange data among both of them continuously.
-In this specific case, the whole infrastructure of Kubernetes, in particular for
-the connectivity aspect handled by the Cilium CNI, is not able to keep pace with
-the bare metal case, where communication is more efficient and faster.
-In this case, the difference is absolutely not negligible.
+% The story changes when the workers' communication is more relevant, becoming the
+% dominant aspect of the performed operation.
+% We can see in the figurev\ref{fig:array-sum-transposed-matrix}\footnote{
+%   Data are available in tables \ref{tab:baremetal-sum-the-transpose} and
+%   \ref{tab:kube-sum-the-transpose} in appendix \ref{appendix:dask}.
+% } how in the case of the sum of the transposed matrix, in the Kubernetes case,
+% the rate of data processable per second drops immediately when the number of
+% cores exceeds 24, forcing the scheduler to allocate the workers on different
+% nodes and to exchange data among both of them continuously.
+% In this specific case, the whole infrastructure of Kubernetes, in particular for
+% the connectivity aspect handled by the Cilium CNI, is not able to keep pace with
+% the bare metal case, where communication is more efficient and faster.
+% In this case, the difference is absolutely not negligible.
+
+A representative subset of data collected from the benchmark is presented in
+fig.~\ref{fig:array-reduction-std-along-axis} and
+fig.~\ref{fig:array-sum-transposed-matrix} \footnote{Data are available in
+tables
+\ref{tab:baremetal-reduction-(std)-along-axis},\ref{tab:kube-reduction-(std)-along-axis},
+\ref{tab:baremetal-sum-the-transpose}, and \ref{tab:kube-sum-the-transpose} in
+appendix \ref{appendix:dask}.}. The processes selected for the two figures
+differ in the amount of communication: in the first figure, we present a
+row-wise reduction operation that requires little communication, while for the
+second figure, we have chosen a case that maximises communication, the sum of a
+matrix and its transpose.
+
+Focusing on fig.~\ref{fig:array-reduction-std-along-axis}, we see how the
+performance gap between the two approaches (bare metal and kubernetes) is
+negligible along the whole spectrum of parallelization from 2 cores in one host
+to 40 cores distributed between 2 hosts. The findings align with the expectation
+that the performance of a container orchestrated by Kubernetes is comparable, if
+not equivalent, to that of a job executed in bare metal with traditional HPC
+tools. The performance behavior changes when the workers' communication becomes
+central to the calculation. Fig.~\ref{fig:array-sum-transposed-matrix} was
+chosen to present the extreme of this aspect: until the computation is limited
+to one single node, a container handles all the communication, and there is no
+difference between a bare metal calculation and a calculation performed in
+Kubernetes. Once the computation exits the node (at 26 core requested), forcing
+the scheduler to allocate the workers on different nodes and exchange data
+between them continuously, the bare metal calculation is minimally impacted
+while the rate of processed data per second drops in the Kubernetes case. Spikes
+in the graph were not investigated, but they were probably due to changes in the
+algorithm.
+
 
 \begin{figure}
   \centering
   \includegraphics[width=0.9\textwidth]{img/chpt4/array-reduction-std-along-axis}
   \caption{Disparity in performance between the bare-metal setup and the
     Kubernetes cluster on equivalent hardware while carrying out a row-wise
-    reduction operation on a 2-D array.}
+    reduction operation on a 2-D array. Missing data points in the kubernetes
+    line where not taken because of internal limitations as explained in sec. XXX. }
   \label{fig:array-reduction-std-along-axis}
 \end{figure}
 
@@ -546,24 +578,40 @@ In this case, the difference is absolutely not negligible.
   \label{fig:array-sum-transposed-matrix}
 \end{figure}
 
-The measurements taken on the time needed by retrieving an element from a random
-position in the array, represented in figure{fig:array-random-access}\footnote{
-  Data are available in tables \ref{tab:baremetal-random-access} and
-  \ref{tab:kube-random-access} in appendix \ref{appendix:dask}.
-}, are fascinating.
-In the ideal case, the time is supposed to be constant, and the faster or slower
-communication between the workers and the scheduler causes any difference
-between the results of the two infrastructures. As was predictable, the
-Kubernetes case is slightly slower than the bare metal one.
-The difference is not too impactful, with just one node involved. At the same
-time, the gap becomes wider after the 24 cores, when the workers are allocated
-to different nodes, and the communication becomes more relevant.
+% The measurements taken on the time needed by retrieving an element from a random
+% position in the array, represented in figure{fig:array-random-access}\footnote{
+%   Data are available in tables \ref{tab:baremetal-random-access} and
+%   \ref{tab:kube-random-access} in appendix \ref{appendix:dask}.
+% }, are fascinating.
+% In the ideal case, the time is supposed to be constant, and the faster or slower
+% communication between the workers and the scheduler causes any difference
+% between the results of the two infrastructures. As was predictable, the
+% Kubernetes case is slightly slower than the bare metal one.
+% The difference is not too impactful, with just one node involved. At the same
+% time, the gap becomes wider after the 24 cores, when the workers are allocated
+% to different nodes, and the communication becomes more relevant.
 
-An interesting behavior not spotted in other cases is the significant the
-difference in variability the two infrastructures have: the Kubernetes case is
-way more variable than the bare metal one, meaning that even if, on average, the
-performance is lower than the bare metal case, in some cases the Kubernetes may
-be faster than the bare metal unlucky case.
+% An interesting behavior not spotted in other cases is the significant the
+% difference in variability the two infrastructures have: the Kubernetes case is
+% way more variable than the bare metal one, meaning that even if, on average, the
+% performance is lower than the bare metal case, in some cases the Kubernetes may
+% be faster than the bare metal unlucky case.
+
+Fig.\ref{fig:array-random-access} reports measurements on the time needed to
+retrieve an element from a random position in the array\footnote{Data are
+available in tables \ref{tab:baremetal-random-access} and
+\ref{tab:kube-random-access} in appendix \ref{appendix:dask}.}. In the ideal
+case, this time is supposed to be constant, and faster or slower communication
+between the workers and the scheduler should be the only cause for differences
+between the results of the two infrastructures. As was predictable, the
+Kubernetes case is slightly less performant than the bare metal one. With just
+one node involved, the difference is negligible. An observed pattern that
+remains to be explained is why the gap becomes wider and wider when the workers
+are allocated to different nodes and the communication increases instead of just
+stabilizing on a slower value. Finally, another interesting behavior not spotted
+in other cases is the significant difference in variability the two
+infrastructures have: the Kubernetes case is more variable than the bare metal
+one.
 
 \begin{figure}
   \centering
