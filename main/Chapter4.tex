@@ -125,84 +125,73 @@ they will not receive any task to perform.
 \section{Dask in practice}\label{sec:daskcloud}
 
 To enable efficient computation in different situations, Dask introduces several
-abstractions to simplify parallel computing tasks.
-At its core, the library offers three primary collections: Dask-Arrays,
-Dask-DataFrames, and Dask-Bags.
+abstractions to simplify parallel computing tasks.  At its core, the library
+offers three primary collections: Dask-Arrays, Dask-DataFrames, and Dask-Bags.
+Those collections mime perfectly the interface of some of the most popular and
+widely used libraries in the scientific community, like NumPy and Pandas, making
+the transition to Dask very smooth for the user.
 
 \begin{itemize}
   \itemsep0em
-  \item \texttt{dask.array} \cite{daskdoc-array}: provides a subset of the
+  \item \texttt{dask.array}: provides a subset of the
     trendy NumPy library, keeping the same interface. It is designed to operate
     with multi-dimensional arrays of numerical data that can be partitioned
     across multiple nodes in the cluster. Each partition is called a
     \texttt{chunk} or \texttt{block} of data, which Dask can process in parallel.
     This allows users to work with data that does not necessarily fit in the memory
-    of a single machine.
+    of a single machine\cite{daskdoc-array}.
 
-    This is the less structured collection, which is meant for numerical data.
+    This object is the less structured collection, which is meant for numerical data.
     For this reason, it is also the most efficient one and comes with many
     functions to manipulate the already implemented and optimized data.
   \item \texttt{dask.bag}: is an unordered collections which allows repetitions.
     It is meant to be used with unstructured or semi-structured data. They are
     suitable, for example, for large-scale data processing tasks such as natural
     language processing.
-  \item \texttt{dask.dataframe} \cite{daskdoc-dataframe}: provides the same
+  \item \texttt{dask.dataframe}: provides the same
     interface as the popular Pandas library, which is widely used for data
     manipulation. It is meant to be used with structured data, in detail, with
-    tabular data.
+    tabular data\cite{daskdoc-dataframe}.
 
     However, since the data are more structured and can be more heterogeneous,
-    for instance, numerical and strings data in various columns, as highlighted
-    by the same Rocklin \cite{dask2015}, the performance of this collection is
-    far from the one of the Dask-Array.
+    for instance, numerical and strings data in various columns far from the one of
+    the Dask-Array\cite{dask2015}.
 \end{itemize}
 
-Those collections mime perfectly the interface of some of the most popular and
-widely used libraries in the scientific community, like NumPy and Pandas, making
-the transition to Dask very smooth for the user.
-
 Since its first release, the interest in the project has grown, and the
-community has developed several extensions to the library, like Dask-ML or
-Dask-CUDA.
-Two side projects more relevant for the scope of this thesis are
-\texttt{dask\_jobqueue} and \texttt{dask-kubernetes} packages.
-
-The first one, \texttt{dask\_jobqueue}, is designed to facilitate the use of
-Dask in traditional HPC clusters.
-This package simplifies the creation and management of Dask clusters (set of
-scheduler and its workers) on these systems by providing an interface that
-abstracts much of the complexity of configuring and launching jobs across
-multiple nodes.
-It provides an interface to uniform the way to allocate the resources on the
-cluster: setting some parameters like the number of workers and the assigned
-resources (CPUs and memory); this library autonomously takes care of submitting
-the job to the cluster's job scheduler.
-In this way, the user can focus on the computation without worrying about
-resource allocation, which may vary depending on the adopted scheduler (SLURM,
-PBS, LSF, and many others are supported).
-In this way, multiple jobs will be autonomously spawned, each executing the
-\texttt{dask-worker} command, which will connect to the scheduler and start to
-execute the tasks. The worker will be automatically terminated when the
-computation is finished releasing the resources.
-
-The latter one, \texttt{dask-kubernetes}, is tailored for modern cloud-native
-environments where applications are containerized and orchestrated by
-Kubernetes.
-This package interacts with a dedicated \texttt{dask-operator}, which must be
-installed on the cluster. It creates the appropriate manifest containing a
-DaskCluster CRD on the fly to apply to the Kubernetes cluster.
+community has developed several extensions to the library for specific
+applications or environments, like Dask-ML or Dask-CUDA for ML applications or
+the \texttt{dask\_jobqueue} and \texttt{dask-kubernetes} to interface with
+existing resource manager systems.  The first one, \texttt{dask\_jobqueue}, is
+designed to facilitate using Dask in traditional HPC clusters. This package
+simplifies the creation and management of Dask clusters (set of scheduler and
+its workers) on these systems by providing an interface that abstracts much of
+the complexity of configuring and launching jobs across multiple nodes. It
+provides an interface to uniformly allocate the resources on the cluster, such
+as setting parameters like the number of workers and the assigned resources
+(CPUs and memory); this library autonomously submits the job to the cluster's
+job scheduler. This way, the user can focus on the computation without worrying
+about resource allocation, which may vary depending on the adopted scheduler
+(SLURM, PBS, LSF, and many others are supported). In this way, multiple jobs
+will be autonomously spawned, each executing the \texttt{dask-worker} command,
+which will connect to the scheduler and start to execute the tasks. The worker
+will be automatically terminated when the computation finishes and the resources
+are released. The latter one, \texttt{dask-kubernetes}, is tailored for modern
+cloud-native environments where applications are containerized and orchestrated
+by Kubernetes. This package interacts with a dedicated \texttt{dask-operator},
+which must be installed on the cluster. It creates the appropriate manifest
+containing a DaskCluster resource on the fly to apply to the Kubernetes cluster.
 The user can specify the number of workers and the resources to allocate, and
-the operator will take care of creating the pods and the services needed to
-execute the computation.
-It is also possible to specify the image for schedulers and workers if the user
-wants to use a custom image with some specific libraries installed.
+the operator will create the pods and the services needed to execute the
+computation. It is also possible to specify the image for schedulers and workers
+if the user wants to use a custom image with some specific libraries installed.
 
-Overall, Dask's design and its supporting ecosystem provide a versatile and
-scalable platform for parallel computing, whether on a single machine, a
-traditional HPC cluster, or a modern cloud infrastructure. This flexibility,
-combined with its compatibility with familiar Python tools, makes Dask an
-appealing choice for data scientists, researchers, and engineers looking to
-handle large-scale data processing and computation efficiently.
+Overall, Dask's design and supporting ecosystem provide a versatile and scalable
+platform for parallel computing, whether on a single machine, a traditional HPC
+cluster, or a modern cloud infrastructure. This flexibility and its
+compatibility with familiar Python tools make Dask an appealing choice for data
+scientists, researchers, and engineers looking to handle large-scale data
+processing and computation efficiently.
 
 \section{Dask as a tool to benchmark infrastructures}\label{sec:daskbenchmark}
 
