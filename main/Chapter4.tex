@@ -193,7 +193,7 @@ compatibility with familiar Python tools make Dask an appealing choice for data
 scientists, researchers, and engineers looking to handle large-scale data
 processing and computation efficiently.
 
-\section{Dask as a tool to benchmark infrastructures}\label{sec:daskbenchmark}
+\section{Benchmarking Dask}\label{sec:daskbenchmark}
 
 Being versatile and flexible, we believe Dask is the perfect tool for assessing
 how a given infrastructure performs under various workloads. This section will
@@ -233,7 +233,7 @@ Dask's scalability performance and limits\cite{Rocklinblog}. \footnote{ Our
 benchmark source code is available in this
 reposiotry \url{https://github.com/IsacPasianotto/dask-bench}} 
 
-\subsection{Benchmark tasks description}\label{subsec:benchmarktasks}
+\subsection{Tasks description}\label{subsec:benchmarktasks}
 
 The code is designed to evaluate the so-called ``weak scalability'', which means
 that the data size is scaled according to the number of computational resources
@@ -337,132 +337,159 @@ Instead, for the data frame, the operations are:
     among the workers since the rows must be re-arranged in a specific order.
 \end{itemize}
 
-\subsection{How measurements were taken}\label{subsec:benchmarkmeasuraments}
+\section{Results and analysis}\label{sec:daskresults}
+\subsection{Data collection}\label{sec:daskresults}
 
-The code was executed on the two nodes of the THIN partition using the
-\texttt{dask\_jobqueue} and \texttt{dask-kubernetes} packages previously cited.
+% The code was executed on two nodes of the THIN partition using the
+% \texttt{dask\_jobqueue} and \texttt{dask-kubernetes} packages previously mentioned.
 
-The scaling test was performed using starting from 1 for having a reference of
-the performance of the serial execution, and then increasing the number of cores
-starting from 2 up to 48 with a step of 2, in order to fill the two nodes
-available as computing nodes completely.
-In both cases, bare metal and Kubernetes with Cilium CNI for pod communication,
-only the worker processes were executed in the two nodes dedicated to the
-computation. The scheduler was executed on a different node (the control plane
-node in the Kubernetes case due to resource constraints) with a fixed resource
-allocation of 8 CPUs and 32 GB of memory.
+% The scaling test was performed using starting from 1 for having a reference of
+% the performance of the serial execution, and then increasing the number of cores
+% starting from 2 up to 48 with a step of 2, in order to fill the two nodes
+% available as computing nodes completely.
+% In both cases, bare metal and Kubernetes with Cilium CNI for pod communication,
+% only the worker processes were executed in the two nodes dedicated to the
+% computation. The scheduler was executed on a different node (the control plane
+% node in the Kubernetes case due to resource constraints) with a fixed resource
+% allocation of 8 CPUs and 32 GB of memory.
 
-In all the cases, all the computational resources used were taken exclusively
-for the measurements, ensuring that no other processes were running on the same
-nodes that could pollute the results.
-The code was executed thirty times for each configuration, and the average time
-with the standard deviation was computed to have a more reliable estimation of
-the performance of the infrastructure.
+% In all the cases, all the computational resources used were taken exclusively
+% for the measurements, ensuring that no other processes were running on the same
+% nodes that could pollute the results.
+% The code was executed thirty times for each configuration, and the average time
+% with the standard deviation was computed to have a more reliable estimation of
+% the performance of the infrastructure.
+
+The code was executed on two nodes of the THIN partition using the
+\texttt{dask\_jobqueue} and \texttt{dask-kubernetes} packages previously
+mentioned. The baseline for the serial execution was collected with 1 core.
+Then, data points were collected by increasing the number of cores from 2 to 48
+with a step of 2. 48 being the number of cores of the combined two nodes. These
+operations were performed in both cases, bare metal and Kubernetes with Cilium
+CNI for pod communication. Only the worker processes were executed in the two
+nodes dedicated to the computation to retain all the resources in the
+computational nodes for the actual benchmark. The scheduler was executed on a
+different node equal to the previously mentioned THIN nodes. The benchmark was
+run thirty times for each configuration, and the average time with the standard
+deviation was computed to have a more reliable estimation of the performance of
+the infrastructure. In all the cases, all the computational resources used were
+taken exclusively for the measurements, ensuring that no other processes that
+could interfere were running on the same nodes.
 
 In the bare metal case, the SLURM job scheduler makes allocating the resources
 straightforward since it allows for specifying the number of CPUs to book a job
-and then spawn the processes in the allocated resources.
-It is sufficient to submit multiple jobs with the same amount of CPUs and
-memory requested, one for each worker used, to have the desired configuration.
+and then spawn the processes in the allocated resources. It is sufficient to
+submit multiple jobs with the same amount of CPUs and memory requested, one for
+each worker used, to have the desired configuration.
 
-In Kubernetes, this process is a little more complex. One of the most important
-and characteristic features of an orchestrator is the ability to manage the
-resources assigned to a pod dynamically.
-This behavior, which usually is a great advantage, must be disabled in this
-case; otherwise, as soon as the pod is created and the scheduler realizes that
-it is saturating the initially assigned resources, it will try to allocate more,
-resulting in the invalidation of the measurements since the final results will
-not be comparable anymore.
-Luckily, the Kubernetes API offers a way to specify the resources that a pod can
-use. In particular, the \texttt{spec.container.resources.limits} and
+In Kubernetes, this process is more complex. One of an orchestrator's most
+important and characteristic features is the ability to manage the resources
+dynamically. This behavior, which usually is a great advantage, must be disabled
+in this case; otherwise, as soon as the pod is created and the scheduler
+realizes that it is saturating the initially assigned resources, it will try to
+allocate more, resulting in the invalidation of the measurements since the final
+results will not be comparable anymore. However, the Kubernetes API offers a way
+to specify the resources that a pod can use. In particular, the
+\texttt{spec.container.resources.limits} and
 \texttt{spec.container.resources.requests} fields serve this purpose
-\cite{kdoc-resources}.
+\cite{kdoc-resources}. The \texttt{requests} field specifies the minimum amount
+of resources a pod needs to find available in a node to be scheduled. If not
+enough resources are available, the pod will remain in the pending state until
+the resources are freed. The \texttt{limits} field is used to specify the
+maximum amount of resources that a pod can use in case of need. This does not
+mean that the resources specified in this field are reserved for the specific
+pod; in fact, it is possible to ``overbook'' the resources of a node, for
+example, in the case of different workloads on different pods are executed
+simultaneously but require more resource in a disjoint time intervals.
 
-The \texttt{requests} field specifies the minimum amount of resources a pod
-needs to find available in a node to be scheduled. If not enough resources are
-available, the pod will remain in the pending state until the resources are
-freed.
-The \texttt{limits} field is used to specify the maximum amount of resources
-that a pod can use in case of need. This does not mean that the resources
-specified in this field are reserved for the specific pod; in fact, it is
-possible to ``overbook'' the resources of a node, for example, in the case of
-different workloads on different pods are executed simultaneously but require
-more resource in a disjoint time intervals.
-To obtain a fair comparison and mimic the behavior of the SLURM job scheduler,
-it is sufficient to set the \texttt{requests} and \texttt{limits} fields to the
-same values; in this way, the exact amount of resources needed by the pod will
-be reserved, and the pod will not be able to use more than that.
+To obtain a fair comparison and mimic the behavior of the SLURM job scheduler
+with kubernetes, it is sufficient to set the \texttt{requests} and
+\texttt{limits} fields to the same values. This way, the amount of resources
+needed by the pod will be reserved, and the pod will not be able to use more.
 Eventually, the \texttt{spec.replicas} field is used to specify the number of
 replicas of the pod that must be created.
 
-It last to specify the criteria used to decide the amount of resources to
-allocate for each worker. There is not a general rule to follow, and preliminary
+The criteria used to decide the amount of resources to allocate for each worker
+remain to be specified. There is no general rule to follow, and preliminary
 analysis showed that different configurations can lead to better performance in
-some cases and worse in others.
+some cases and worse in others. The adopted strategy was to set:
 
-The adopted strategy was to set:
 $$
 \#_{\text{worker\_CPUs}} = \left\lfloor \frac{\#_{\text{CPUs}}}{\left( \left\lfloor
     \frac{\#_{\text{CPUs}} - 1}{\#_{\text{CPUs\_per\_node}}} \right\rfloor \right) + 1} \right\rfloor
 $$
 
-This means that initially, a node will be filled up to the maximum of the
-available CPUs (in the case of the used hardware: 24 cores), using a single
-worker.
-Then, once the number of used cores is greater than the number present in a
-node, a new worker will be spawned, splitting the global amount of booked CPUs
-among the workers in equal parts. In this way, there will always be one worker
-per node since scheduling two on the same node is impossible.
-The idea behind this choice is to try to achieve the best performance by
-eliminating the infra-node communication, keeping only the unavoidable
-inter-node one.
+\noindent where $\#_{\text{worker\_CPUs}}$ is number of CPUs assigned to each worker
+$\#_{\text{CPUs}}$ is the number of requested CPUs for the computation and
+$\#_{\text{CPUs\_per\_node}}$ is the number of CPUs available on a node. Through
+this strategy, first, a node will be filled up to the maximum available CPUs (in
+the case of the used hardware: 24 cores), using a single worker. Then, once the
+number of used cores is greater than the number in a node, a new worker will be
+spawned, splitting the global amount of booked CPUs among the workers in equal
+parts. This choice aims to achieve the best performance by eliminating
+infra-node communication and keeping only the unavoidable inter-node one.
 
-An important observation that must be made is the difference in how the SLURM
-scheduler and Kubernetes orchestrator let the user allocate the requested
-resources.
-The first mentioned considers the 100\% of the hardware resources bookable for a
-job.
-Obviously, this is not the reality since the operating system and other system
-processes (like also the \texttt{slurmd} daemon itself) are running on the same
-nodes and inevitably consume some resources.
-Hence, even if the scheduler allows booking the complete node, the actual amount
-of resources is only approximately equal to the requests.
+% This means that initially, a node will be filled up to the maximum of the
+% available CPUs (in the case of the used hardware: 24 cores), using a single
+% worker.
+% Then, once the number of used cores is greater than the number present in a
+% node, a new worker will be spawned, splitting the global amount of booked CPUs
+% among the workers in equal parts. In this way, there will always be one worker
+% per node since scheduling two on the same node is impossible.
+% The idea behind this choice is to try to achieve the best performance by
+% eliminating the infra-node communication, keeping only the unavoidable
+% inter-node one.
 
-On the opposite side, in order to work, the Kubernetes orchestrator itself
-relies on some pods, which, like all the other pods, consume resources and have
-a minimum amount of resources that must be reserved for them.
-This could seem an irrelevant detail, but it has the consequence that the total
-amount of bookable resources is less than 100\% of the hardware resources.
+% An important observation that must be made is the difference in how the SLURM
+% scheduler and Kubernetes orchestrator let the user allocate the requested
+% resources.
+% The first mentioned considers the 100\% of the hardware resources bookable for a
+% job.
+% Obviously, this is not the reality since the operating system and other system
+% processes (like also the \texttt{slurmd} daemon itself) are running on the same
+% nodes and inevitably consume some resources.
+% Hence, even if the scheduler allows booking the complete node, the actual amount
+% of resources is only approximately equal to the requests.
 
-As a consequence, during the execution of the described benchmark, when the
-cores assigned to the pod worker are close or equal to the total available on
-the node, Kubernetes will start to throttle the pod since the pod will be
-considered un-schedulable.
-For what it was said in the results presented in the following section
-(\ref{sec:daskresults}), some points will be missing in the Kubernetes case.
-However, a general trend can be observed, and the results remain meaningful.
+% On the opposite side, in order to work, the Kubernetes orchestrator itself
+% relies on some pods, which, like all the other pods, consume resources and have
+% a minimum amount of resources that must be reserved for them.
+% This could seem an irrelevant detail, but it has the consequence that the total
+% amount of bookable resources is less than 100\% of the hardware resources.
 
-\section{Results}\label{sec:daskresults}
+% As a consequence, during the execution of the described benchmark, when the
+% cores assigned to the pod worker are close or equal to the total available on
+% the node, Kubernetes will start to throttle the pod since the pod will be
+% considered un-schedulable.
+% For what it was said in the results presented in the following section
+% (\ref{sec:daskresults}), some points will be missing in the Kubernetes case.
+% However, a general trend can be observed, and the results remain meaningful.
+
+An observation that must be made is the difference in how the SLURM scheduler
+and Kubernetes orchestrator let the user allocate the requested resources. The
+first considers 100\% of the hardware resources bookable for a job, while the
+latter has a minimum amount of resources that must be reserved for itself.
+Clearly, the Kubernetes approach is the correct one, as SLURM itself is not
+exempt from having system processes (like the daemon itself) running on the same
+nodes and inevitably consuming some resources. This could seem a small detail,
+but it has the consequence that the total amount of bookable resources in
+Kubernetes results to be less than 100\% of the hardware resources. As a
+consequence, during the execution of the described benchmark, when the cores
+assigned to the pod worker are close or equal to the total available on the
+node, Kubernetes will start to throttle the pod since the pod will be considered
+un-schedulable. For this reason, results presented in the following sections
+obtained with Kubernetes will have fewer points.
 
 Similar to the previous chapter, due to the large amount of data generated by
-the experiments conducted, only a subset of these will be presented in this
-thesis.
-The complete set of results can be found in a dedicated report that was not
-attached to this thesis to maintain the focus on the main topic.
-The report is available in the public repository of the thesis at the following
-link:
+the experiments, only a subset of these will be presented in this thesis. The
+complete set of results can be found in a supplementary report \footnote {The
+supplementary material can be obtained at the following link
+\url{https://github.com/IsacPasianotto/master-thesis/blob/main/appendixC-dask_results/report.pdf}.}.
+Also, as in the previous chapter, the following pages will present the results
+of the benchmark graphically to make them more readable and more accessible to
+be interpreted\footnote{Detailed numerical results will be reported in appendix
+\ref{appendix:dask}}
 
-\begin{center}
-  \small
-  \url{
-    https://github.com/IsacPasianotto/master-thesis/blob/main/appendixC-dask_results/report.pdf
-  }.
-\end{center}
-
-Analogously to the previous chapter, the following pages will present the
-results of the benchmark graphically to make them more readable and more
-accessible to be interpreted; the detailed numerical results will be reported in
-appendix \ref{appendix:dask}.
 
 \subsection{Arrays}
 
@@ -599,7 +626,7 @@ by the Kubernetes infrastructure overhead.
   \label{fig:dataframe-sort}
 \end{figure}
 
-\subsection{Considerations}
+\section{Considerations}
 
 The results obtained from the benchmark are pretty interesting and provide some
 insights into the performance of the two different infrastructures.
