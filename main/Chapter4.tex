@@ -4,75 +4,123 @@
 
 \section{What is Dask?}\label{sec:daskintro}
 
-In the last two decades, the Python programming language has gained more and
-more consensus among the scientific community, becoming the de-facto standard in
-many academic applications and research.
-Consequently, many dedicated libraries have been developed to support the
-researcher in their daily work.
-Even though Python is a very high-level language, it is not natively designed to
-exploit the full potential of modern hardware, such as multi-core CPUs or
-distributed systems. This is why all the most popular libraries for scientific
-computing are so important: they provide the user with a high-level interface to
-exploit the hardware's full potential, speeding up computation. Still, under the
-hood, they are usually implemented in more low-level languages to achieve the
-best performance.
+In the last two decades, the Python programming language has gained increasingly
+more traction among the scientific community, becoming the de-facto standard in
+many academic applications and research. Consequently, many dedicated libraries
+have been developed to support the researcher in their daily work. Python is a
+very high-level language that is not designed with performances in mind, and
+natively, it has minimal support to exploit the full potential of multi-core
+CPUs or distributed systems. This lack of native support is why all the
+libraries for scientific computing are so important: implementing
+computationally demanding calls in more low-level languages to achieve the best
+performance, these libraries provide the user with a high-level interface to
+leverage the hardware's full potential, speeding up computation. Dask
+\cite{dask2015} is one of these libraries, first presented by Matthew Rockling
+in 2015.
 
-Dask \cite{dask2015} is one of these libraries, first presented by Matthew
-Rockling in 2015. What makes it unique is that, despite the majority of those
-libraries aiming to exploit the full potential of a single machine, relying on
-the multi-core architecture, Dask adds the ability to scale on multiple nodes,
-keeping all the capabilities of efficiently using the multi threads parallelism.
+% Dask \cite{dask2015} is one of these libraries, first presented by Matthew
+% Rockling in 2015. What makes it unique is that, despite the majority of those
+% libraries aiming to exploit the full potential of a single machine, relying on
+% the multi-core architecture, Dask adds the ability to scale on multiple nodes,
+% keeping all the capabilities of efficiently using the multi threads parallelism.
 
-This is not the only library that provides this feature; one notable example is
-\texttt{mpi4py} \cite{Dalcin2021}, which is a Python wrapper for the MPI.
-However, Dask meets the needs of the scientific community, as it provides a more
-high-level interface without the need to deal with the complexity of the
+% Dask is a very flexible library, and it is designed to be used in a wide range
+% of applications, from simple data manipulation to complex machine learning
+% pipelines. It is also very appreciated by the community, as it is actively
+% developed and maintained and well documented.
+% One of the reasons for the pride of the Dask authors is the low barrier to
+% entry, which makes the library usable by even the less expert Python
+% programmers. There is no need to use things like classes and objects and adopt
+% an object-oriented programming style, as the library is designed to be used in a
+% functional programming style, using structures more similar to tuples, lists,
+% and dictionaries  \cite{dask2015}, making it a more attractive choice for the
+% adoption in a scientific project.
+
+% This is not the only library that provides this feature; one notable example is
+% \texttt{mpi4py} \cite{Dalcin2021}, which is a Python wrapper for the MPI.
+% However, Dask meets the needs of the scientific community, as it provides a more
+% high-level interface without the need to deal with the complexity of the
+% communication aspect, which the library handles by itself at the possible cost
+% of a performance drop.
+
+Dask is a flexible library designed to handle a wide range of applications, from
+simple data manipulation to complex machine learning pipelines, in a parallel
+fashion. What makes Dask unique is that while most other scientific libraries
+aim to exploit the full potential of a single machine by relying on a multi-core
+architecture, Dask adds the ability to scale on multiple nodes, keeping all the
+capabilities of efficiently using multi-threaded parallelism. In a broader
+context, Dask is not the only library that provides distributed computation; one
+notable example is \texttt{mpi4py} \cite{Dalcin2021}, a Python wrapper for the
+MPI. However, Dask meets the needs of the scientific community, as it provides a
+more high-level interface without the need to deal with the complexity of the
 communication aspect, which the library handles by itself at the possible cost
-of a performance drop.
+of a performance drop.  Dask is also greatly appreciated by the community, as it
+is actively developed, maintained, and well-documented. Another reason for the
+popularity of Dask is the low entry barrier, which makes the library usable by
+even the less expert Python programmers. There is no need to use things like
+classes and objects and adopt an object-oriented programming style, as the
+library is designed to be used in a functional programming style, using
+structures more similar to tuples, lists, and dictionaries  \cite{dask2015},
+making it a more attractive choice for the adoption in a scientific project.
 
-Dask is a very flexible library, and it is designed to be used in a wide range
-of applications, from simple data manipulation to complex machine learning
-pipelines. It is also very appreciated by the community, as it is actively
-developed and maintained and well documented.
-One of the reasons for the pride of the Dask authors is the low barrier to
-entry, which makes the library usable by even the less expert Python
-programmers. There is no need to use things like classes and objects and adopt
-an object-oriented programming style, as the library is designed to be used in a
-functional programming style, using structures more similar to tuples, lists,
-and dictionaries  \cite{dask2015}, making it a more attractive choice for the
-adoption in a scientific project.
+% The idea behind this library is to encode the code of the program into a
+% directed acyclic graph (DAG), built by the library itself as a dictionary,
+% where each entry is a task to be executed.
+% This object is then passed to the \textit{``scheduler''}, which is the component
+% responsible for managing the computation graphs, and the \textit{``workers''}:
+% the components that perform the computation.
+% The scheduler is a crucial library component and represents one of the most
+% impactful choices in terms of total overhead introduced.
+% The choice of the authors is to rely on a ``last in, first out'' (LIFO)
+% strategy, meaning that the next task to be executed is the one whose
+% dependencies were the most recently resolved.
+% The authors' idea is to keep the scheduler as simple as possible, avoiding
+% spending too much time computing complex metrics to decide the next task to
+% schedule and keeping the overhead as low as possible.
+% Several scheduler implementations are available depending on the use case, like
+% a single-threaded, multi-threaded, or multi-process mode.
+% Since the impact on the final performance of the scheduler is so significant,
+% many efforts have been made to find a more efficient implementation of it, like
+% the one presented by B{\"o}hm \cite{bohm2020}. In any case, the scheduler is a
+% replaceable component, and the user can just implement its own scheduler tuned
+% for its specific use case.
 
-The idea behind this library is to encode the code of the program into a
-directed acyclic graph (DAG), built by the library itself as a dictionary,
-where each entry is a task to be executed.
-This object is then passed to the \textit{``scheduler''}, which is the component
-responsible for managing the computation graphs, and the \textit{``workers''}:
-the components that perform the computation.
-The scheduler is a crucial library component and represents one of the most
-impactful choices in terms of total overhead introduced.
-The choice of the authors is to rely on a ``last in, first out'' (LIFO)
-strategy, meaning that the next task to be executed is the one whose
-dependencies were the most recently resolved.
-The authors' idea is to keep the scheduler as simple as possible, avoiding
-spending too much time computing complex metrics to decide the next task to
-schedule and keeping the overhead as low as possible.
-Several scheduler implementations are available depending on the use case, like
-a single-threaded, multi-threaded, or multi-process mode.
-Since the impact on the final performance of the scheduler is so significant,
-many efforts have been made to find a more efficient implementation of it, like
-the one presented by B{\"o}hm \cite{bohm2020}. In any case, the scheduler is a
-replaceable component, and the user can just implement its own scheduler tuned
-for its specific use case.
-
-As previously said, the tasks created by the scheduler are submitted to the
-workers. Workers are the components that actually perform the computation,
-reporting the results back to the scheduler.
-Provided that the scheduler is able to reach the workers and vice versa, and, if
-needed, the filesystem is shared among all the interested parties, the physical
-location where the workers are running is agnostic to the functioning of the
-library. This means that the workers can run on the same machine where the
+The idea behind Dask is to encode the program's code into a directed acyclic
+graph (DAG), built as a dictionary by the library itself, where each entry is a
+task to be executed. This object is then passed to the \textit{``scheduler''},
+the component responsible for managing the computation graphs, and the
+\textit{``workers''}: the components that perform the computation. The scheduler
+is a crucial library component and represents one of the most impactful choices
+in terms of total overhead introduced. We choose to rely on a ``last in, first
+out'' (LIFO) strategy, meaning that the next task to be executed is the one
+whose dependencies were the most recently resolved. Our idea is to keep the
+scheduler as simple as possible, avoiding spending too much time computing
+complex metrics to decide the next task to schedule and keeping the overhead as
+low as possible. Several scheduler implementations are available depending on
+the use case, like a single-threaded, multi-threaded, or multi-process mode.
+Since the impact on the final performance of the scheduler is significant, many
+efforts have been made to find a more efficient implementation\cite{bohm2020}.
+In any case, the scheduler is a replaceable component, and the user can
+implement its scheduler tuned for its specific use case. The scheduler submits
+the tasks to the workers responsible for the computation, who then report the
+results to the scheduler.  Workers need to access the shared filesystem or a
+shared data source, but they are agnostic about the physical location where they
+are running. This means that the workers can run on the same machine where the
 scheduler is running or on different machines in a distributed environment,
 making the parallelism of the execution implicit and transparent to the user.
+Furthermore, this distributed nature allows for high fault tolerance, as the
+number of workers can change dynamically. If some cannot reach a certain point,
+they will not receive any task to perform. 
+
+% As previously said, the tasks created by the scheduler are submitted to the
+% workers. Workers are the components that actually perform the computation,
+% reporting the results back to the scheduler.
+% Provided that the scheduler is able to reach the workers and vice versa, and, if
+% needed, the filesystem is shared among all the interested parties, the physical
+% location where the workers are running is agnostic to the functioning of the
+% library. This means that the workers can run on the same machine where the
+% scheduler is running or on different machines in a distributed environment,
+% making the parallelism of the execution implicit and transparent to the user.
 
 \section{Dask in practice}\label{sec:daskcloud}
 
