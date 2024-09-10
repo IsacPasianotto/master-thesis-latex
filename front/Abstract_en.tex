@@ -210,10 +210,7 @@ VXLAN step they rely (Flannel) on and for using iptables for load balancing
 (Calico).
 In contrast, the flannel plugin is the one that allows it to reach the maximum
 bandwidth; however, in this second case, the difference between the plugins is
-almost negligible. The value reached at convergence is probably dictated by
-internal limits in place to grant a fair usage of the resources, such as the
-bandwidth, in scenarios where the main goal is to grant each pod a fair amount
-of traffic. Focusing on the second column, we see how the pod-to-pod
+almost negligible. Focusing on the second column, we see how the pod-to-pod
 communication is slowed by having to pay the network layer.
 
 \begin{figure}
