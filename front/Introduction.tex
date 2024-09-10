@@ -12,10 +12,10 @@ started many years ago with centralized computing and passed through distributed
 and grid computing to arrive at the current state of on-demand resources
 \cite{Surbiryala2019CloudCH}.
 
-\section{Cloud computing definition}
+\section{What is cloud computing}
 
 Giving a precise and formal definition of "cloud computing" is not so
-straightforward because, as R.Buya and All observe in \cite{RBuyya2011}:
+straightforward because, as R.Buya \emph{et al.}\cite{RBuyya2011}:
 \textit{"Cloud computing has been coined as an umbrella term to describe a category of
 sophisticated on-demand computing services initially offered by commercial providers"}.
 
@@ -24,13 +24,20 @@ technology in which the end user does not need to configure (or even know) all
 the implementation details that make it possible to use the resources that this
 requires. This paradigm makes it possible to minimize the effort needed to have
 a functioning environment, focusing mainly on the actual usage of it.
-The definition proposed by the National Institute of Standards and Technology
-\cite{nistdef} is a milestone in the sector's literature that has to be quoted.
-This document outlines the main characteristics that a "cloud" solution
-presents, as well as two widely used categorizations to classify the different
-solutions available.
 
-Likewise, according to NIST, the essential characteristics to ensure that we can
+The standard proposed by the National Institute of Standards and Technology
+(NIST)\cite{nistdef} outlines the characteristics that a "cloud" solution must
+present to be defined as such. It also defines two widely used categorizations
+to classify the different solutions available.
+
+
+% The definition proposed by the National Institute of Standards and Technology
+% \cite{nistdef} is a milestone in the sector's literature that has to be quoted.
+% This document outlines the main characteristics that a "cloud" solution
+% presents, as well as two widely used categorizations to classify the different
+% solutions available.
+
+According to NIST, the essential characteristics to ensure that we can
 talk about cloud computing are: "\textit{On-demand self-service}",
 in the sense that a consumer can unilaterally receive computing capabilities
 without direct interaction with the service provider, "\textit{Broad network
@@ -59,60 +66,92 @@ infrastructure, the following categories can be delineated: "\textit{Private
 
 \section{Literature review}\label{sec:intro-literature-review}
 
+The cloud computing concept is relatively new, as is its definition, and his
+paradigm finds its roots in modern principles and technologies. Different needs
+often drive the approaches adopted in the cloud compared to those used in HPC,
+so almost 15 years after its formalization, only some HPC workloads have been
+transitioned. While making such a transition is not mandatory, those who
+overtook this path found themselves in a better situation after reaching
+convergence with more portable codes and lower infrastructure costs by scaling
+the computational resources adaptively to meet fluctuating workload demands.
+Nevertheless, before taking this path, the trade-offs between the costs and
+benefits and the feasibility of such a move should be assessed.
 
-This entire thesis aims to find an answer to the question \textit{"Is
-  it possible to move HPC applications to a cloud environment?"}.
-Doing such a transition is not mandatory, but the cloud computing paradigm finds
-its roots in more modern principles and technologies than those used in HPC and
-the assessment of the trade-offs between the costs and benefits of such a move
-should be performed.
+% This entire thesis aims to find an answer to the question \textit{"Is
+%   it possible to move HPC applications to a cloud environment?"}.
+% Doing such a transition is not mandatory, but the cloud computing paradigm finds
+% its roots in more modern principles and technologies than those used in HPC and
+% the assessment of the trade-offs between the costs and benefits of such a move
+% should be performed.
+
+% The scientific literature has already faced this question, particularly at the beginning of the 2010s when the topic started to catch the community's attention. In particular, some of the first works worthy to mention are the ones by D. Ghoshal \emph{et al.}~\cite{Ghoshal2011} and  R. Exp\'osito \emph{et al.}~\cite{exposito2013}.  The authors were quite skeptical about performing that transition in all the cases. Many critical points were raised, primarily focused on the performance.  Ghoshal  pointed out how the the I/O operations quickly became the system's bottleneck and how the performance measurements were affected by an incredibly high variance.  A more structured approach to evaluate the performance of HPC applications in the cloud is proposed by Exp\'osito with his team.  They performed several scaling tests of MPI codes (varying the MPI implementation) over the Amazon EC2 cloud. The results were not encouraging, as the results show that the network latency affected the application's overall performance.  Therefore, it is not surprising that in that period, the general sentiment about that the transition of the HPC in the cloud was quite negative. One of the first voices out of the choir was the one of Gupta \cite{Gupta2013}, who pointed out in 2013 that it could be some specific cases where the cloud is a proper alternative (and maybe cheaper) concerning a traditional HPC infrastructure, stating also how, with the years, possible improvements could alter the situation.
+
+The scientific literature started to address the cloud transition at the
+beginning of the 2010s with the advent of several affordable and on-demand
+commercial cloud solutions. D. Ghoshal \emph{et al.}~\cite{Ghoshal2011} and  R.
+Exp\'osito \emph{et al.}~\cite{exposito2013} were among the first to explore the
+possibility of moving their HPC workflows to the cloud. Unfortunately, their
+preliminary results were unfavorable, leaving them skeptical about performing
+that transition. In particular, multiple performance shortcomings were found.
+Ghoshal pointed out how the the I/O operations quickly became the system's
+bottleneck and how the performance measurements were affected by an incredibly
+high variance. Exp\'osito and his team then proposed a more structured approach
+to evaluating the performance of HPC applications in the cloud: they performed
+several scaling tests of MPI codes (varying the MPI implementation) over the
+Elastic Compute Cloud (EC2). These results showed that the complicated network
+setup induced a latency that affected the application's overall performance.
+Unsurprisingly, in that period, the general sentiment about the transition of
+the HPC in the cloud was quite negative. Nevertheless, economic arguments have
+been made that Small and medium-scale organizations could obtain better
+performance/cost ratios in the cloud than in on-premises infrastructures,
+envisioning a future where the improvement in the software responsible for the
+virtualization would lead to the popularization of the novel solution
+\cite{Gupta2013}.
 
 
-The scientific literature has already faced this question, particularly at the
-beginning of the 2010s when the topic started to catch the scientific
-community's attention. In particular, some of the first works worthy to mention
-are the ones by D. Ghoshal et al. (2011) and  R. Exp\'osito et al. (2013).
-The authors were quite skeptical about performing that transition in all the
-cases. Many critical points were raised, primarily focused on the performance.
-Ghoshal \cite{Ghoshal2011} pointed out how the the I/O operations quickly became
-the system's bottleneck and how the performance measurements were affected by an
-incredibly high variance.
-A more structured approach to evaluate the performance of HPC applications in
-the cloud is proposed by Exp\'osito with his team \cite{exposito2013}.
-They performed several scaling tests of MPI codes (varying the MPI
-implementation) over the Amazon EC2 cloud. The results were not encouraging, as
-the results show that the network latency affected the application's overall
-performance.
-Therefore, it is not surprising that in that period, the general sentiment about
-that the transition of the HPC in the cloud was quite negative. One of the first
-voices out of the choir was the one of Gupta \cite{Gupta2013}, who pointed out
-in 2013 that it could be some specific cases where the cloud is a proper
-alternative (and maybe cheaper) concerning a traditional HPC infrastructure,
-stating also how, with the years, possible improvements could alter the situation.
+% After that period, the enthusiasm for the possibility of this interesting
+% workload transition has decreased, and after a decade, the scientific community
+% has yet to focus too much on this topic. However, in recent times, XXfor some
+% reasonXX some works have started to re-evaluate the possibility, like the one by
+% Saini \emph{et al.}~\cite{Saini2021} (2021) and Reed \emph{et
+% al.}~\cite{Reed2022} (2022). Why is it interesting to re-evaluate this
+% possibility? The main reason is that the technologies have evolved a lot, and
+% some results that were found are not guaranteed to hold anymore. One particular
+% aspect that we can explain in detail in chapter \ref{sec:chpt1-containers} why
+% is so crucial, is the fact that all the 2010s work taken into account only the
+% VMs and not the containers which has become more and more adopted year after
+% year. Both the works by Saini and Reed in facts conclude with optimistic notes
+% about the evolution of cloud vendors' infrastructure and the always-increasing
+% performance of the cloud resources can exhibit. Obviously, the transition is not
+% painless, and some critical points are still present, like the network latency
+% problem, and some authors do not share the same enthusiasm. Just to mention a
+% very recent work, Keke \cite{Keke2023} (2023) remarked how solving a cloud-only
+% problem: The security of the data can slow down the overall processes.
+% Unfortunately, since in the cloud computing scenario typically the data is
+% stored in a remote location, not managed by the owner of the data, this price
+% has to be paid.
 
-After that period, probably the enthusiasm for the possibility of this
-interesting workload transition has decreased a lot, and in the next decade, the
-scientific community has yet to focus too much on this topic.
-Only in recent times some works have started to re-evaluate the possibility,
-like the one by Saini et al. \cite{Saini2021} (2021) and Reed et al. \cite{Reed2022}
-(2022).
-Why is it interesting to re-evaluate this possibility? The main reason is that
-the technologies have evolved a lot, and some results that were found are not
-guaranteed to hold anymore. One particular aspect that we can explain in detail
-in chapter \ref{sec:chpt1-containers} why is so crucial, is the fact that all
-the 2010s work taken into account only the VMs and not the containers which has
-become more and more adopted year after year. Both the works by Saini and Reed
-in facts conclude with optimistic notes about the evolution of cloud vendors'
-infrastructure and the always-increasing performance of the cloud resources can
-exhibit.
-Obviously, the transition is not painless, and some critical points are still
-present, like the network latency problem, and some authors do not share the
-same enthusiasm.
-Just to mention a very recent work, Keke \cite{Keke2023} (2023) remarked how
-solving a cloud-only problem: The security of the data can slow down the
-overall processes. Unfortunately, since in the cloud computing scenario
-typically the data is stored in a remote location, not managed by the owner of
-the data, this price has to be paid.
+After the initial momentum, the enthusiasm for the possibility of this
+interesting transition to the cloud faded. For the next decade, the scientific
+community focused only a little on the topic. However, in the last few years,
+thanks to the aggressive pricing of cloud solutions and the changes in the
+science computational workflows, works like Reed \emph{et al.}~\cite{Reed2022}
+and like Saini \emph{et al.}~\cite{Saini2021} started to re-evaluate the
+possibility of a change in the paradigm. Why is it interesting to re-evaluate
+this possibility? The main reason is that the technologies have evolved, and
+some found results are not guaranteed to hold anymore\cite{Guidi_2021}. One of
+the main aspects that will be better detailed in chapter
+\ref{sec:chpt1-containers} is that all the works in the years 2010s approach the
+cloud only taking into account the Virtual Machine (VM) strategy for
+virtualization, not considering containers that have become the most adopted
+technique to deploy cloud infrastructure. Despite the positive conclusion drawn
+by the recent literature, it comes as no surprise that the transition is not
+painless, and some critical points are still present. For example, the network
+latency problem underwent several improvements from hardare\cite{Firestone_2018}
+to software [cite ebpf]. Still, as we will show in this work, it is not at par
+with standard HPC equivalent environments. Furthermore, new problems, such as
+managing secure and confidential data that needs to be uploaded on the cloud to
+be processed, are arising \cite{Keke2023}.
 
 \section{Aim statement}
 
