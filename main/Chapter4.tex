@@ -195,37 +195,43 @@ processing and computation efficiently.
 
 \section{Dask as a tool to benchmark infrastructures}\label{sec:daskbenchmark}
 
-Being versatile and flexible, Dask appears to be the perfect tool for assessing
-how a given infrastructure performs under various workloads.
-This section will present a benchmark developed with Dask that aims to simulate
-some operations commonly executed in a scientific context.
-Similarly to the previous chapter, the idea is to execute the same code on the
-two nodes of the THIN partition of ORFEO cluster\footnote{Technical details have
-  already been described in section \ref{subsec:hardware}} equipped with the
-SLURM job scheduler. Then, the execution of the same code on the same hardware
-will be repeated, but in this second iteration, the Kubernetes orchestrator will
-be used to manage the resources.
-In this way, it is possible to determine in quantitative terms the performance
-gap between the two different cluster management paradigms, allowing more
-precise evaluations of the worthiness of all the features provided by the
-Kubernetes orchestrator.
+Being versatile and flexible, we believe Dask is the perfect tool for assessing
+how a given infrastructure performs under various workloads. This section will
+present a benchmark developed with Dask that aims to simulate some operations
+commonly executed in a scientific context. Similarly to the previous chapter,
+the idea is to execute the same code on the two nodes of the THIN partition of
+ORFEO cluster\ref{subsec:hardware} provisioned with the SLURM job scheduler.
+Then, the same code will be executed on the same hardware, but the Kubernetes
+orchestrator will be used to manage the resources in this second iteration.
 Since the code is the same, the only difference between the two executions is
-how the resources are allocated and managed.
+how the resources are allocated and managed, which will allow us to
+quantitatively determine the performance gap between the two different cluster
+management paradigms.
 
-The code used to benchmark the two different infrastructures was developed by
-the author of this thesis specifically for this purpose.
-The general trend is to develop a code tailored explicitly for the use case
-needed or to compare the Daks performance with other libraries with similar
-functionality, like Spark or Ray.
-It follows that the choice of creating a custom benchmark from scratch was made
-because there was not any standard benchmark already used and recognized by the
-community to be used for this purpose, and the author wanted to have complete
-control over the code and the operations executed.
-The proposed benchmark is a collection of operations commonly executed in
-scientific contexts and designed to be executed on arrays and data frames.
-It was heavily inspired by a blog post made by Matthew Rocklin, the principal
-author of the library, where he presents a similar benchmark to show the
-scalability performance and limits of his creation \cite{Rocklinblog}.
+% The code used to benchmark the two different infrastructures was developed by
+% the author of this thesis specifically for this purpose.
+% The general trend is to develop a code tailored explicitly for the use case
+% needed or to compare the Daks performance with other libraries with similar
+% functionality, like Spark or Ray.
+% It follows that the choice of creating a custom benchmark from scratch was made
+% because there was not any standard benchmark already used and recognized by the
+% community to be used for this purpose, and the author wanted to have complete
+% control over the code and the operations executed.
+% The proposed benchmark is a collection of operations commonly executed in
+% scientific contexts and designed to be executed on arrays and data frames.
+% It was heavily inspired by a blog post made by Matthew Rocklin, the principal
+% author of the library, where he presents a similar benchmark to show the
+% scalability performance and limits of his creation \cite{Rocklinblog}.
+
+Since we could not find an exhaustive and recognized benchmark to measure Dask's
+performance and wanted to control the code and the operations executed, we
+developed a code specifically for this purpose.  The proposed benchmark is a
+collection of operations commonly executed in scientific contexts and designed
+to be executed on arrays and data frames. The code base is heavily inspired by a
+blog post by Matthew Rocklin, where he presents a similar benchmark to show
+Dask's scalability performance and limits\cite{Rocklinblog}. \footnote{ Our
+benchmark source code is available in this
+reposiotry \url{https://github.com/IsacPasianotto/dask-bench}} 
 
 \subsection{Benchmark tasks description}\label{subsec:benchmarktasks}
 
@@ -234,10 +240,9 @@ that the data size is scaled according to the number of computational resources
 used, keeping the amount of data per worker constant. The ideal case for weak
 scalability is when the execution time remains constant, regardless of the
 number of workers used, or equivalently, the rate of data processable per unit
-of time is a linear function of the number of workers.
-
-For what concerns the operations executed on the arrays, the benchmark is
-composed of the following tasks:
+of time is a linear function of the number of workers. For what concerns the
+operations executed on the arrays, the benchmark is composed of the following
+tasks:
 
 \begin{itemize}
   \itemsep0em
