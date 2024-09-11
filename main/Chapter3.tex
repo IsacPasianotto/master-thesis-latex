@@ -1,133 +1,104 @@
 \chapter{CNIs comparison and assessment}\label{chpt:osu}
 
-% This chapter is dedicated to explaining in detail the criteria and
-% methodologies adopted to compare the different CNIs analyzed in section
-% \ref{sec:node2node} to assess their performance and pick the most promising one.
-
-% One initial remark that should be remembered throughout the chapter is that all
-% the tests were performed on a freshly installed Kubernetes cluster with the CNI
-% plugin under test being initialized with the default configuration.
-% This means that the results obtained are not necessarily correct in absolute
-% terms. All the considered options are widely configurable and tunable to fit
-% specific situations better.
-
-% The main idea behind this choice is to pick the option that provides the best
-% performance out of the box, and then tune it to improve it further.
-% It could be the case that a discarded CNI could overtake the chosen one with the
-% proper tuning, but this is out of the scope of this work. This first section
-% aims to provide a reproducible and reliable comparison method that can be
-% applied to any Kubernetes cluster to assess the performance of the CNIs under
-% test. The same methodology could be used again to compare how different
-% configurations of the same CNI plugin increase or decrease the overall
-% performance.
-
 This chapter will cover the benchmarking from an HPC workload perspective of the
 different CNIs described in the previous chapter to pinpoint the one that best
-suits HPC's needs. To perform all these tests, we always proceed from a freshly
-installed Kubernetes cluster and install the CNI plugin under the default
-configuration. Consequently, the results are a snapshot of how a standard
-configuration behaves, giving a fair representation of what every practitioner
-would start from. In general, all the CNIs discussed here are widely
-configurable and tunable to fit specific situations better, but this goes beyond
-the scope of this work. 
+suits HPC's needs.
+To perform all these tests, we always proceed from a freshly installed
+Kubernetes cluster and install the CNI plugin under the default configuration.
+Consequently, the results are a snapshot of how a standard configuration
+behaves, giving a fair representation of what every practitioner would start
+from.
+In general, all the CNIs discussed here are widely configurable and tunable to
+fit specific situations better, but this goes beyond the scope of this work.
 
 In the first part of this chapter, we will explain how to run HPC workflows on
-Kubernetes and introduce the well-accepted OSU benchmark. Then, after deploying
-the infrastructure on bare metal, we will run the benchmarks focusing on latency
-and bandwidth. Finally, we will discuss the results, concluding which we believe
-to be the CNI that better fits the use case under consideration. 
+Kubernetes and introduce the well-accepted OSU benchmark.
+Then, after deploying the infrastructure on bare metal, we will run the
+benchmarks focusing on latency and bandwidth. Finally, we will discuss the
+results, concluding which we believe to be the CNI that better fits the use case
+under consideration.
 
 \section{Methodology}\label{sec:methodology}
 
 We went for a benchmark that performs a ping-pong using the MPI code for these
-tests. The Message Passing Interface (MPI) \cite{mpi41} is the de-facto standard
-for modern parallel programming. It is a specification for a standard library
-for message-passing defined by the MPI Forum, a broadly based group of parallel
-computer vendors, library writers, and applications specialists. Then, those
-standards are applied to many implementations; some are open-source, like
-OpenMPI and MPICH, while others are proprietary, such as Intel MPI and IBM
-Spectrum MPI. For this work, we chose to rely on a free and open-source
-implementation; hence, the final decision fell on OpenMPI, which is widely used
-and known in the scientific community.
+tests.
+The Message Passing Interface (MPI) \cite{mpi41} is the de-facto standard for
+modern parallel programming.
+It is a specification for a standard library for message-passing defined by the
+MPI Forum, a broadly based group of parallel computer vendors, library writers,
+and applications specialists.
+Then, those standards are applied to many implementations; some are open-source,
+like OpenMPI and MPICH, while others are proprietary, such as Intel MPI and IBM
+Spectrum MPI.
+For this work, we chose to rely on a free and open-source implementation; hence,
+the final decision fell on OpenMPI, which is widely used and known in the
+scientific community.
 
 Although writing an ad-hoc MPI code to perform this ping-pong test is relatively
 easy, we opted for a widely used and well-known benchmark that produces results
-that can be easily reproduced and compared with the literature. The benchmark we
-chose to test the network is the suite of tests provided by Ohio State
-University: the OSU Micro-Benchmarks \cite{osu}. This suite is a collection of
-MPI-based benchmarks written in C, Java, or Python (for this work, only the C
-version was used) that can be used to measure the hardware performance of a good
-variety of network interfaces and network stacks: InfiniBand, Omni-Path,
-Ethernet RoCE, and Slingshot. Although the OSU benchmarks were created to
-compare the performance of different hardware, they can also be used in other
-scenarios, like this case study. The main idea is to repeat the same test on the
-same hardware with different CNI plugins; in this way, it will be possible to
-provide a quantitative comparison of the overhead introduced by the different
-CNIs and the impact on the overall performance of the cluster.
-
+that can be easily reproduced and compared with the literature.
+The benchmark we chose to test the network is the suite of tests provided by
+Ohio State University: the OSU Micro-Benchmarks \cite{osu}.
+This suite is a collection of MPI-based benchmarks written in C, Java, or Python
+(for this work, only the C version was used) that can be used to measure the
+hardware performance of a good variety of network interfaces and network stacks:
+InfiniBand, Omni-Path, Ethernet RoCE, and Slingshot.
+Although the OSU benchmarks were created to compare the performance of different
+hardware, they can also be used in other scenarios, like this case study.
+The main idea is to repeat the same test on the same hardware with different CNI
+plugins; in this way, it will be possible to provide a quantitative comparison
+of the overhead introduced by the different CNIs and the impact on the overall
+performance of the cluster.
 The process to perform the tests is as follows: two pods are spawned; each pod
 will contain a container with a copy of the compiled binaries of the OSU
-benchmark and a process to run those binaries. Those two pods will be scheduled
-both on the same node and then on different nodes; this can be achieved in
-Kubernetes with the \texttt{spec.topologySpreadConstraints} field in the pod
-definition \cite{kdoc-topologyconstraints}. During the initialization of any MPI
-program, with the function \texttt{MPI\_Init()}, every process is informed about
-the existence of the others, their rank, and most importantly, how to reach them
-for the needed communication. In particular, the MPI library achieves the latter
-by knowing the other nodes' IP address or a resolvable hostname. This operation
-may be commonplace in a traditional HPC cluster, where the nodes are all
-connected to the same network and the hostname of the nodes is resolvable to the
-corresponding IP address. However, in the case of the setting described for
-assessing the Kubernetes connectivity plugins, this last part is more complex
-than in the traditional HPC scenario. Containers are isolated from the host and
-each other, and the hostname of a container is usually a random string,
-different at each restart. Moreover, by definition, each pod has its own Network
-Namespace. Hence, the IP address of a container is not reachable from another
-container unless some specific configuration is made (like the configuration of
-a kubernetes \texttt{service}).
+benchmark and a process to run those binaries.
+Those two pods will be scheduled both on the same node and then on different
+nodes; this can be achieved in Kubernetes with the
+\texttt{spec.topologySpreadConstraints} field in the pod definition
+\cite{kdoc-topologyconstraints}.
 
-% A straightforward solution to this problem is relying on the Kubernetes
-% \texttt{mpi-operator} developed by the KubeFlow community
-% \cite{kubeflow-mpioperator}.
-% This operator acts like a controller which allows to spawn a CRD (Custom
-% Resource Definition) called \texttt{MPIJob} \cite{redhat-mpioperator} that
-% creates the pods and sets up the communication between them.
-% In this way, it should only specify how many replicas of a ``worker'' pod must
-% be created. The operator will take care of the rest, spawning all of them plus
-% one (or more) ``launcher'' pod that will submit the job and redirect the
-% program's output executed by the workers in its logs.
-% In this way, the programmer can write its MPI code as usual, without worrying
-% about all the behind-the-scene stuff (SaaS approach), and have the containerized
-% version of the code running on a Kubernetes cluster.
+During the initialization of any MPI program, with the function
+\texttt{MPI\_Init()}, every process is informed about the existence of the
+others, their rank, and most importantly, how to reach them for the needed
+communication.
+In particular, the MPI library achieves the latter by knowing the other nodes'
+IP address or a resolvable hostname.
+This operation may be commonplace in a traditional HPC cluster, where the nodes
+are all connected to the same network and the hostname of the nodes is
+resolvable to the corresponding IP address.
+However, in the case of the setting described for assessing the Kubernetes
+connectivity plugins, this last part is more complex than in the traditional HPC
+scenario.
+Containers are isolated from the host and each other, and the hostname of a
+container is usually a random string, different at each restart.
+Moreover, by definition, each pod has its own Network Namespace.
+Hence, the IP address of a container is not reachable from another container
+unless some specific configuration is made (like the configuration of a
+kubernetes \texttt{service}).
 
 A straightforward solution to this problem is to use the \texttt{mpi-operator}
-developed by the KubeFlow community \cite{kubeflow-mpioperator}. At installation
-time, this operator comes with a few Custom Resources Definitions (CRDs) that
-extend the Kubernetes API, adding support for new functionality. In particular,
-at runtime, the operator acts like a controller that monitors the resources of
-the new type \texttt{MPIJob} \cite{redhat-mpioperator}. Once the user creates a
-new MPIJob resource, the operator instantiates the pods requested in the
-resource, sets up the communication between them, and makes one (or more)
-``launcher'' pod that will submit the job and redirect the program's output
-executed by the workers in its logs. In this way, the programmer can write its
-MPI code as usual, without worrying about all the behind-the-scene stuff (SaaS
-approach), and have the containerized version of the code running on a
-Kubernetes cluster.
-
-% It was said that two pods would be spawned, each containing a running container
-% with the OSU benchmark binaries. What remains to be clarified is how such a
-% container is buil
-% The entire process, which leads to the final image usable by the MPI operator,
-% is quite simple and made by some modular steps that can be easily modified to
-% replace the MPI distribution adopted or the code.
-% The various steps (schematized in figure \ref{fig:mpi-container-creation}) are:
+developed by the KubeFlow community \cite{kubeflow-mpioperator}.
+At installation time, this operator comes with a few Custom Resources
+Definitions (CRDs) that extend the Kubernetes API, adding support for new
+functionality.
+In particular, at runtime, the operator acts like a controller that monitors the
+resources of the new type \texttt{MPIJob} \cite{redhat-mpioperator}.
+Once the user creates a new MPIJob resource, the operator instantiates the pods
+requested in the resource, sets up the communication between them, and makes one
+(or more) ``launcher'' pod that will submit the job and redirect the program's
+output executed by the workers in its logs.
+In this way, the programmer can write its MPI code as usual, without worrying
+about all the behind-the-scene stuff (SaaS approach), and have the containerized
+version of the code running on a Kubernetes cluster.
 
 We said we needed two pods containing a running container with the OSU benchmark
-binaries to perform the benchmark. What remains to be clarified is how such a
-container is built. The entire process, which leads to the final image usable by
-the MPI operator, is made by some modular steps that can be modified to replace
-the MPI distribution adopted or the code. The steps (schematized in figure
-\ref{fig:mpi-container-creation}) are:
+binaries to perform the benchmark.
+What remains to be clarified is how such a container is built.
+The entire process, which leads to the final image usable by the MPI operator,
+is made by some modular steps that can be modified to replace the MPI
+distribution adopted or the code.
+The steps (schematized in figure \ref{fig:mpi-container-creation}) are:
+
 \begin{itemize}
   \itemsep0em
   \item \textit{Builder container creation}: This container image is meant to be used
@@ -238,56 +209,35 @@ equally for what concerns the bandwidth. The tests are:
 Until now, we have discussed how to address the problem from the cloud
 perspective, leaving out the HPC point of view. We will refer to the HPC side
 with the expression \textit{``bare metal''} as it operates without any layer of
-abstraction or communication overheads introduced by Kubernetes. In particular,
-the expression will refer to the case when the code is executed directly on the
-node, allocating resources in a traditional approach with SLRUM \footnote{add
-citation} as the resource manager.
-
-% the execution of each of these benchmark will be repeated 30 times, in order
+abstraction or communication overheads introduced by Kubernetes.
+In particular, the expression will refer to the case when the code is executed
+directly on the node, allocating resources in a traditional approach with SLRUM
+\cite{Jette2023} as the resource manager.
 
 \section{Experimental setup}
 \label{sec:measurements}
 
-% To perform (almost\footnote{See Appendix \ref{appendix:kprod} for more detail}),
-% all the tests described in this chapter and in the chapter \ref{chpt:dask} were
-% performed on the same hardware.
-% The available resources assigned to the investigation project of this thesis
-% consist of a cluster of 3 nodes from the THIN partition of the ORFEO cluster.
-% Each of these nodes (they are all identical in any aspect) is equipped with two
-% \texttt{Intel Xeon Gold 6126} processors; each of those CPUs is composed of 12
-% cores with a base frequency of 2.6 GHz and a maximum turbo frequency of 3.7 GHz.
-% The total amount of RAM available per node is 768 GB (12x64 GB 2666 MT/s), which
-% composes two NUMA regions, one for each socket. The available hyper-threading
-% was disabled, hence every time in this work the concept of core will be
-% mentioned, it will be refers to physical core.
-
-% The nodes dispose of a 25 Gbps Ethernet network card, which serves two ethernet
-% ports connected to the same switch. InfiniBand was also available on those nodes
-% but was not used for the tests.
-% The reason behind this choice is that the examined CNI, unlike the Mellanox
-% CNis, does not support, at least out of the box, the InfiniBand network. To
-% guarantee a fair comparison, the tests were performed enforcing the usage of the
-% ethernet connection, even in the bare metal scenario where InfiniBand was
-% available.
-
 The resources assigned to the investigation project of this thesis consist of a
-cluster of 3 identical nodes from the THIN partition of the ORFEO cluster. Each
-of these nodes is equipped with two \texttt{Intel Xeon Gold 6126} processors;
-each of those CPUs is composed of 12 cores with a base frequency of 2.6 GHz and
-a maximum turbo frequency of 3.7 GHz. The total amount of RAM available per node
-is 768 GB (12x64 GB 2666 MT/s), which composes two NUMA regions, one for each
-socket. The available hyper-threading was disabled; hence, every time in this
-work the concept of the core is mentioned, it will be referred to as the
-physical core. The nodes dispose of an Ethernet network card with two 25 Gbps
-ethernet ports connected to two top-of-rack switches. These two switches are
-connected with a  200Gbps MC-LAG and offer a 3.6 Tbps (full-duplex) switching
-fabric capable of handling over 2Bpps. InfiniBand was also available on those
-nodes but was not used for the tests. This choice is because the examined CNIs
-do not support, at least out of the box, the InfiniBand network. The Infiniband
-can be used, for example, with the Mellanox CNI. Unless otherwise specified
-\footnote{See Appendix \ref{appendix:kprod} for more detail}, all the tests
-described in this chapter and the following chapters \ref{chpt:dask} were
-performed on the same hardware. 
+cluster of 3 identical nodes from the THIN partition of the ORFEO cluster.
+Each of these nodes is equipped with two \texttt{Intel Xeon Gold 6126}
+processors; each of those CPUs is composed of 12 cores with a base frequency of
+2.6 GHz and a maximum turbo frequency of 3.7 GHz.
+The total amount of RAM available per node is 768 GB (12x64 GB 2666 MT/s), which
+composes two NUMA regions, one for each socket.
+The available hyper-threading was disabled; hence, every time in this work the
+concept of the core is mentioned, it will be referred to as the physical core.
+The nodes dispose of an Ethernet network card with two 25 Gbps ethernet ports
+connected to two top-of-rack switches.
+These two switches are connected with a  200Gbps MC-LAG and offer a 3.6 Tbps
+(full-duplex) switching fabric capable of handling over 2Bpps.
+InfiniBand was also available on those nodes but was not used for the tests.
+This choice is because the examined CNIs do not support, at least out of the
+box, the InfiniBand network.
+The Infiniband can be used, for example, with the Mellanox CNI.
+
+Unless otherwise specified \footnote{See Appendix \ref{appendix:kprod} for more
+  detail}, all the tests described in this chapter and the following chapters
+\ref{chpt:dask} were performed on the same hardware.
 
 \subsection{Used software}
 
@@ -304,7 +254,7 @@ The software stack was composed by the components listed in table
     \toprule
     \textbf{Component} & \textbf{Name \& Version} & \textbf{Notes} \\
     \midrule
-    O.S.              & \texttt{Fedora 40}           & Linux kernel: \texttt{9.12-200.fc40.x86\_64} \\
+    O.S.              & \texttt{Fedora 40}           & Linux kernel: \texttt{6.9.12-200.fc40.x86\_64} \\
     Compiler          & \texttt{gcc 14.2.1 20240801} & \texttt{(Red Hat 14.2.1-1)}   \\
     MPI library       & \texttt{OpenMPI 4.1.6rc4}    &  \\
     Python            & \texttt{Python 3.11.9}       & Directly compiled on the nodes using the \newline \texttt{-}\texttt{-enable-optimizations} flag. \\
@@ -331,123 +281,56 @@ The software stack was composed by the components listed in table
 
 \subsection{Latency}\label{subsec:results-latency}
 
-% In figures \ref{fig:latency-mp-1-node} and \ref{fig:latency-mp-2-nodes} are reported
-% the results of the \texttt{osu\_latency\_mp} test performed on a single node
-% (\ref{fig:latency-mp-1-node}) and on two nodes (\ref{fig:latency-mp-2-nodes}).
-% Both the configurations allows to draw interesting conclusions.
-
-% Let's start the analysis from the single node case
-% \ref{fig:latency-mp-1-node}\footnote{Data are available in tables
-%   \ref{tab:latency-mp-baremetal-1nodes}, \ref{tab:latency-mp-calico-1nodes},
-%   \ref{tab:latency-mp-cilium-1nodes}, and \ref{tab:latency-mp-flannel-1nodes} at
-%   appendix \ref{appendix:osu}.}.
-% A marked difference between the bare metal case and all the CNI cases is
-% immediately noted. This might lead to premature conclusions that communication
-% within the same node is immeasurably slower than in the bare metal case.
-% However, some considerations must be made to avoid any hasty misinterpretation.
-% This notable difference (about two orders of magnitude) is due to the fact that
-% under the hood, two very different scenarios are being compared.
-% In the case of bare metal, the communication between two processes, which are
-% aware that they are running on the same node, has a very low latency. In fact,
-% the communication is done through shared memory, with no interaction with all
-% the system parts involved in inter-node communication.
-% On the other side, when two MPI processes are spawned in two different
-% containers in two different pods, from the processes' point of view, they will
-% act as if they are on two different nodes since they are not aware of the actual
-% underlying infrastructure.
-% This phenomenon is well appreciable if we compare the results of the latency in
-% Kubernetes of the communication between two pods on the same node and the one on
-% two different nodes. In figure \ref{fig:cilium-latency} is reported as an
-% example of the case with the Cilium CNI.
-% The plot highlights how the two latency measurements are, at least for a small
-% number of bytes sent and received, on the same order of magnitude, while in the
-% bare metal case, the difference is hugely more expansive. This difference in the
-% behavior is the consequence of what was previously explained: while in the bare
-% metal case, the communication is done through shared memory, hence the
-% transition from the single node to the multi-node involves a change in the
-% communication protocol, in the Kubernetes case the communication is done through
-% the same mechanisms, so the difference between the single and multi-node case is
-% entirely due to the slow down introduced by the physical network the message has
-% to travel through.
-
-% However, this does not mean that these results are pointless; on the contrary,
-% they are very convenient in understanding the overhead the CNI plugin
-% introduces, with no other external factors that could interfere with the
-% results, like the actual usage of the network.
-% We can see that thanks to its kernel-level approach, the Cilium CNI plugin
-% introduces the lowest overhead. At the same time, flannel, probably due to the
-% encapsulation/decapsulation process that the packets have to undergo, is the one
-% that performs the worst.
-% This means that Cilium should provide the lowest latency in communication
-% between two pods scheduled on the same node in the Kubernetes cluster among the
-% considered candidates.
-
-% It is not the primary goal of this benchmark to assess the absolute performance
-% of the containerized implementation of the bare metal scenario. However, since
-% this entire thesis is dedicated to studying if a cloud-native infrastructure can
-% be used to perform HPC-like tasks, an important consideration must be made: the
-% presented setting does not guarantee, but also does not claim to do so, the best
-% performance that can be achieved with the bare metal scenario.
-% To do so, using only one bigger container and spawning all the MPI processes
-% inside is more convenient. This way, the communication between the processes
-% will be done through shared memory, and the latency will be very low, at the
-% point that the results are not distinguishable for the bare metal
-% case\footnote{See table
-%   \ref{tab:latency-mp-one-pod} in appendix \ref{appendix:osu} for
-%   quantitative results.}.
-% The communication between pods in the same node is meant for applications whose
-% workflows are not highly coupled and for which the tolerance threshold for the
-% latency is higher. If this is not the case and performance is the priority,
-% hence putting the various components of an application in different pods is
-% logically wrong, and the best choice is to use a single pod with all the needed
-% containers inside. In this way, all the processes will be able to communicate
-% through a shared memory without the need to consult Kubernetes to know how to
-% reach each other (recall that all the resources in the same pod share the
-% network namespace).
-
 Starting the analysis from the single node case reported in
-fig.~\ref{fig:latency-mp-1-node}\footnote{Data are available in tables
-\ref{tab:latency-mp-baremetal-1nodes}, \ref{tab:latency-mp-calico-1nodes},
-\ref{tab:latency-mp-cilium-1nodes}, and \ref{tab:latency-mp-flannel-1nodes} in
-appendix \ref{appendix:osu}.}. It is possible to notice a clear performance gap
-of almost two orders of magnitude between the bare metal and all CNIs's
-latencies. This behavior might lead to the misconception that communication
-within the same node is slower than in the case of bare metal. However, this
-difference is because, under the hood, two different means of communication are
-compared. In the case of bare metal, the two processes performing the ping pong
-are aware that they are running on the same node. This knowledge allows them to
-communicate through shared memory without interacting with all the network stack
-required for inter-node communication. On the other hand, when two MPI processes
-are spawned in two different containers within two different pods, from the
-processes' point of view, they will act as if they are on two different nodes
-since they are not aware of the actual underlying infrastructure.
+fig.~\ref{fig:latency-mp-1-node}\footnote{
+  Data are available in tables \ref{tab:latency-mp-baremetal-1nodes},
+  \ref{tab:latency-mp-calico-1nodes}, \ref{tab:latency-mp-cilium-1nodes}, and
+  \ref{tab:latency-mp-flannel-1nodes} in appendix \ref{appendix:osu}.}.
+It is possible to notice a clear performance gap of almost two orders of
+magnitude between the bare metal and all CNIs's latencies.
+This behavior might lead to the misconception that communication within the same
+node is slower than in the case of bare metal.
+
+However, this difference is because, under the hood, two different means of
+communication are compared.
+In the case of bare metal, the two processes performing the ping pong
+are aware that they are running on the same node.
+This knowledge allows them to communicate through shared memory without
+interacting with all the network stack required for inter-node communication.
+On the other hand, when two MPI processes are spawned in two different
+containers within two different pods, from the processes' point of view, they
+will act as if they are on two different nodes since they are not aware of the
+actual underlying infrastructure.
 
 From a performance perspective, all the CNIs and bare metal follow a similar
-pattern. First, since the sent message is smaller than the Maximum transmission
-unit (MTU) of approximately 1500 bytes \footnote{this value depends slightly but
-in the studied scenarios does not deviate by more than 50 bytes from 1500 bytes.
-Factors that can change this value are the various autotuning implemented by the
-CNIs, the need for package encapsulation, and the setup of the underlying
-infrastructure.} the latency is steady. Once we approach the MTU size, we see a
-slight improvement in the speed of CNIs, which we speculate can be attributed to
-algorithmic optimization for packages close to typical MTUs. Further increase in
-the message size cause defragmentation of the package, which results in slower
-communication. At approximately $10^4$ byte, we believe a caching buffer in the
-internal Linux network stack saturated, and this caused the second jump we see.
-
-% Another option that has to be verified is if the change in the packet size
-% triggers a change   TCP -> UDP in the communication.
+pattern.
+First, since the sent message is smaller than the Maximum transmission unit
+(MTU) of approximately 1500 bytes \footnote{
+  this value depends slightly but in the studied scenarios does not deviate by
+  more than 50 bytes from 1500 bytes. Factors that can change this value are the
+  various autotuning implemented by the CNIs, the need for package
+  encapsulation, and the setup of the underlying infrastructure.
+} the latency is steady.
+Once we approach the MTU size, we see a slight improvement in the speed of CNIs,
+which we speculate can be attributed to algorithmic optimization for packages
+close to typical MTUs.
+Further increase in the message size cause defragmentation of the package, which
+results in slower communication.
+At approximately $10^4$ byte, we believe a caching buffer in the internal Linux
+network stack saturated, and this caused the second jump we see.
 
 These results allow us to investigate the behavior of each plugin, isolating it
 from the noise and unpredictability introduced by the network (like its
-saturation). We can see that thanks to its kernel-level approach, the Cilium CNI
-plugin introduces the lowest overhead. At the same time, Flannel pays for its
-simplicity and is the one that performs the worst but is similar to Calico.
+saturation).
+We can see that thanks to its kernel-level approach, the Cilium CNI plugin
+introduces the lowest overhead.
+At the same time, Flannel pays for its simplicity and is the one that performs
+the worst but is similar to Calico.
 These results suggest that Cilium should provide the lowest latency in
 communication between two pods scheduled on the same node in the Kubernetes
-cluster among the considered candidates. Nevertheless, we can observe that all
-three have very similar behavior, suggesting that the Linux kernel performs much
-of the heavy lifting.
+cluster among the considered candidates.
+Nevertheless, we can observe that all three have very similar behavior,
+suggesting that the Linux kernel performs much of the heavy lifting.
 
 
 \begin{figure}
@@ -458,49 +341,29 @@ of the heavy lifting.
   \label{fig:latency-mp-1-node}
 \end{figure}
 
-% The situation is quite different when communication is performed among different nodes.
-% In this case, see figure \ref{fig:latency-mp-2-nodes}\footnote{Data are available in tables
-%   \ref{tab:latency-mp-baremetal-2nodes}, \ref{tab:latency-mp-calico-2nodes},
-%   \ref{tab:latency-mp-cilium-2nodes}, and \ref{tab:latency-mp-flannel-2nodes} at
-%   appendix \ref{appendix:osu}.},
-% All the measurements are closer to each other and have the same magnitude.
-% In this situation, the comparison is more ``fair'' since all the communication
-% takes place through the network, letting the data show the price paid in terms
-% of latency for the overhead introduced by each CNI plugin.
-% Flannel confirms his tendency to be the slowest CNI plugin, while the duel
-% between Calico and Cilium is not a clear winner. The eBPF based is clearly
-% faster for small messages, while the BGP-routing strategy seems to reward more
-% at the increase of the message size and, starting from the \texttt{262144
-%   MPI\_CHAR} message size beats Cilium with a lower latency.
-% However, it must be said that the gap between Calico and Cilium for bigger
-% message sizes is much less broad than the same distance in small messages.
-% This should be taken into account when reasoning in terms of a general-purpose
-% infrastructure with no particular hints about the kind of workload that will be
-% commonly executed on it.
-
 When communication is performed between different nodes, as presented in
-fig.~\ref{fig:latency-mp-2-nodes}\footnote{data are available in tables
-\ref{tab:latency-mp-baremetal-2nodes}, \ref{tab:latency-mp-calico-2nodes},
-\ref{tab:latency-mp-cilium-2nodes}, and \ref{tab:latency-mp-flannel-2nodes} at
-appendix \ref{appendix:osu}.}. We see that measurements of all the tested
-solutions perform similarly, deviating at most $few\%$ one from the other. In
-this situation, the comparison is ``fair'' since all the communication occurs
+fig.~\ref{fig:latency-mp-2-nodes}\footnote{
+  data are available in tables \ref{tab:latency-mp-baremetal-2nodes},
+  \ref{tab:latency-mp-calico-2nodes}, \ref{tab:latency-mp-cilium-2nodes}, and
+  \ref{tab:latency-mp-flannel-2nodes} at appendix \ref{appendix:osu}.
+}.
+We see that measurements of all the tested solutions perform similarly,
+deviating at most $few\%$ one from the other.
+In this situation, the comparison is ``fair'' since all the communication occurs
 through the network, blurring out the overhead introduced by each CNI plugin.
 The behavior of all the plugins continues to be in line with what we observed
-before. Flannel confirms his tendency to be the slowest CNI plugin, while Calico
-and Cilium tend to behave similarly. This similarity is particularly evident
-when the package size is much larger than the MTU. The eEBP-based approach is
-clearly faster for small messages, while the BGP-routing strategy seems to
-reward more at the increase of the message size and, starting from the
-\texttt{262144 mpi\_char} message size tops Cilium with lower latency. The
-obtained latency results in the realistic multi-host scenario with different
+before.
+Flannel confirms his tendency to be the slowest CNI plugin, while Calico and
+Cilium tend to behave similarly.
+This similarity is particularly evident when the package size is much larger
+than the MTU.
+The eEBP-based approach is clearly faster for small messages, while the
+BGP-routing strategy seems to reward more at the increase of the message size
+and, starting from the \texttt{262144 mpi\_char} message size tops Cilium with
+lower latency.
+The obtained latency results in the realistic multi-host scenario with different
 CNIs are generally close to bare metal results, allowing optimism about using a
 Kubernetes cluster to perform HPC-like tasks.
-
-% These minor differences make it so that when reasoning in terms deploying of a
-% general-purpose infrastructure with no particular hints about the kind of
-% workload that will host other features, such as ease of deployment, policy
-% handling, and stability, shoud also be carefully  considered
 
 
 \begin{figure}
@@ -514,37 +377,40 @@ Kubernetes cluster to perform HPC-like tasks.
 The differences in the communication method used when being in a single node
 scenario and a dual node scenario are better presented in
 fig.~\ref{fig:cilium-latency} where we restricted our attention to the Cilium
-CNI and the bare metal. Cilium was chosen for the good results observed in the
-other analysis. In the plot, we can identify two regimes: one at high
-performance with only one contribution and one slower, with three curves. The
-only contribution to the first regime is the latency in the single node bare
-metal scenario that we put as a reference for the best reference. The latter has
-three curves, two contributions from Cilium and one for the bare metal when the
-packages travel across the networks. This difference in the behavior is the
-consequence of what was previously mentioned: while in the bare metal case, the
-communication is done through shared memory, hence the transition from the
-single node to the multi-node involves a change in the communication protocol,
-in the Kubernetes case the communication is always done through the same
-mechanisms, so the difference between the single and multi-node case is entirely
-due to the extra steps introduced by the physical network. It is remarkable how
-once inter-node communication is involved, the behaviors flatten, and different
-approaches equal one another.
+CNI and the bare metal.
+Cilium was chosen for the good results observed in the other analysis.
+In the plot, we can identify two regimes: one at high performance with only one
+contribution and one slower, with three curves.
+The only contribution to the first regime is the latency in the single node bare
+metal scenario that we put as a reference for the best reference.
+The latter has three curves, two contributions from Cilium and one for the bare
+metal when the packages travel across the networks.
+This difference in the behavior is the consequence of what was previously
+mentioned: while in the bare metal case, the communication is done through
+shared memory, hence the transition from the single node to the multi-node
+involves a change in the communication protocol, in the Kubernetes case the
+communication is always done through the same mechanisms, so the difference
+between the single and multi-node case is entirely due to the extra steps
+introduced by the physical network.
+It is remarkable how once inter-node communication is involved, the behaviors
+flatten, and different approaches equal one another.
 
 To verify the assumption that by removing the network layer, even in the
 Kubernetes case, it is possible to reach bare metal performance, we created one
-container and spawned the MPI processes within it. In this situation, the
-communication between the processes must go through shared memory as in the bare
-metal case, and we measured a latency within the error bars of the bare metal
-case \footnote{See table \ref{tab:latency-mp-one-pod} in appendix
-\ref{appendix:osu} for quantitative results.}.
+container and spawned the MPI processes within it.
+In this situation, the communication between the processes must go through
+shared memory as in the bare metal case, and we measured a latency within the
+error bars of the bare metal case \footnote{
+  See table \ref{tab:latency-mp-one-pod} in appendix \ref{appendix:osu} for
+  quantitative results.}.
 
 In general, the communication between pods in the same node is meant for
-applications with a high latency tolerance. If this is not the case and
-performance is the priority, hence putting the various components of an
-application in different pods is logically wrong, and the best choice is to use
-a single pod with all the needed containers inside. In this way, all the
-processes will be able to communicate through a shared memory without the need
-to consult Kubernetes to know how to reach each other.
+applications with a high latency tolerance.
+If this is not the case and performance is the priority, hence putting the
+various components of an application in different pods is logically wrong, and
+the best choice is to use a single pod with all the needed containers inside.
+In this way, all the processes will be able to communicate through a shared
+memory without the need to consult Kubernetes to know how to reach each other.
 
 \begin{figure}
   \centering
@@ -555,11 +421,13 @@ to consult Kubernetes to know how to reach each other.
 \end{figure}
 
 The totality of the performance test performed goes beyond what has been
-presented here. To avoid confusion, we presented only a subset of them. For the
-sake of completeness, the results of all the tests are available in a dedicated
-supplementary material report \footnote{ The supplementary material can be
-obtained at the following
-link\url{https://github.com/IsacPasianotto/master-thesis/blob/main/appendixB-osu_results/report.pdf}.}.
+presented here.
+To avoid confusion, we presented only a subset of them.
+For the sake of completeness, the results of all the tests are available in a
+dedicated supplementary material report \footnote{
+  The supplementary material can be obtained at the following
+  link \url{https://github.com/IsacPasianotto/master-thesis/blob/main/appendixB-osu_results/report.pdf}.
+}.
 Moreover, all the numerical results in this section are available in the
 appendix \ref{appendix:osu}.
 
@@ -572,21 +440,14 @@ Alongside latency, another aspect to consider when assessing the performance of
 a network is bandwidth. Like in the previous section, in
 fig.~\ref{fig:bibw-1-node} and \ref{fig:bibw-2-nodes} are reported the results
 of the \texttt{osu\_bibw} benchmark performed on a single node
-(\ref{fig:bibw-1-node}) and on two nodes (\ref{fig:bibw-2-nodes})\footnote{Data
-for the one node case can be consulted in tables
-\ref{tab:bibw-baremetal-1nodes}, \ref{tab:bibw-calico-1nodes},
-\ref{tab:bibw-flannel-1nodes}, and \ref{tab:bibw-cilium-1nodes}, while data for
-the two nodes case are available in tables \ref{tab:bibw-baremetal-2nodes},
-\ref{tab:bibw-calico-2nodes}, \ref{tab:bibw-flannel-2nodes}, and
-\ref{tab:bibw-cilium-2nodes} at appendix \ref{appendix:osu}.}.
-
-% Regarding the single node case, considerations similar to the one made for the
-% latency case can be made about the gap between the bare metal case and all the
-% Kubernetes cases.
-% In this case, the difference between the different solutions still not be vast
-% enough to discard a priori a certain CNI plugin; however, what is interesting to
-% note is that also, in this case, there is always a best performer (Cilium), and
-% a worst one (Calico) independently from the message size.
+(\ref{fig:bibw-1-node}) and on two nodes (\ref{fig:bibw-2-nodes})\footnote{
+  Data for the one node case can be consulted in tables
+  \ref{tab:bibw-baremetal-1nodes}, \ref{tab:bibw-calico-1nodes},
+  \ref{tab:bibw-flannel-1nodes}, and \ref{tab:bibw-cilium-1nodes}, while data
+  for the two nodes case are available in tables
+  \ref{tab:bibw-baremetal-2nodes}, \ref{tab:bibw-calico-2nodes},
+  \ref{tab:bibw-flannel-2nodes}, and \ref{tab:bibw-cilium-2nodes} at appendix
+  \ref{appendix:osu}.}.
 
 \begin{figure}
   \centering
@@ -597,36 +458,26 @@ the two nodes case are available in tables \ref{tab:bibw-baremetal-2nodes},
 \end{figure}
 
 In the single node case (fig.~\ref{fig:bibw-1-node}), it is possible to make
-similar considerations to those in the latency breakdown. As previously noted,
-also in this case, the gap between the bare metal case and all the Kubernetes
-cases is due to the difference in the communication method. The bare metal can
-use direct memory communication, while Kubernetes adds an extra networking
-layer. When comparing bandwidths, the difference between the different CNIs is
+similar considerations to those in the latency breakdown.
+As previously noted, also in this case, the gap between the bare metal case and
+all the Kubernetes cases is due to the difference in the communication method.
+The bare metal can use direct memory communication, while Kubernetes adds an
+extra networking layer.
+When comparing bandwidths, the difference between the different CNIs is
 negligible; however, what is interesting to note is that Cilium keeps being the
-best performer, even if by a margin. Calico, on the other hand, performs worst
-independently of the message size. In the inter-node communication case
-(fig~\ref{bibw-2-nodes}) the Cilium CNI outperforms the other candidates but
-only for small-size messages, reaching a bandwidth extremely close to the bare
-metal case. Similar to the previous case, the BGP routing strategy of the Calico
-CNI plugin appears to be the least convenient way to saturate the network,
-resulting in the slowest independent form of the message size. Flannel starts
-performing poorly for small messages, however, as the message size increases,
-the overhead introduced by the encapsulation/decapsulation process remains
-constant, making it more negligible and letting the plugin overtake Cilium for
-more prominent messages.
+best performer, even if by a margin.
+Calico, on the other hand, performs worst independently of the message size.
+In the inter-node communication case (fig~\ref{fig:bibw-2-nodes}) the Cilium CNI
+outperforms the other candidates but only for small-size messages, reaching a
+bandwidth extremely close to the bare metal case.
+Similar to the previous case, the BGP routing strategy of the Calico CNI plugin
+appears to be the least convenient way to saturate the network, resulting in the
+slowest independent form of the message size.
+Flannel starts performing poorly for small messages, however, as the message
+size increases, the overhead introduced by the encapsulation/decapsulation
+process remains constant, making it more negligible and letting the plugin
+overtake Cilium for more prominent messages.
 
-% The analysis of the other case (inter-node communication) is also fascinating.
-% Once again, the Cilium CNI outperforms the other candidate for small-size
-% messages, reaching a bandwidth extremely close to the bare metal case.
-% Similar to the previous case, the BGP routing strategy of the Calico CNI plugin
-% appears to be the least convenient way to saturate the network, resulting in the
-% slowest independent form of the message size.
-% Flannel starts performing poorly for small messages. However, as the message
-% size increases, the overhead introduced by the encapsulation/decapsulation
-% process remains constant, making it more negligible and letting the plugin
-% overtake Cilium for more prominent messages.
-
-% \begin{figure}
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.94\textwidth]{img/chpt3/bibw-2-nodes}
@@ -637,69 +488,24 @@ more prominent messages.
 
 \section{Final considerations}\label{sec:final-considerations}
 
-% The results of the measurements conducted in this chapter led to the final
-% decision to adopt the Cilium CNI plugin as the most promising candidate for the
-% infrastructure this thesis claims to deploy for the execution of HPC-like tasks.
-% The choice was made primarily considering the fact that this plugin was never
-% the more mediocre one in any of the tests performed.
-
-% Flannel was the CNI plugin that delivered the highest bandwidth in multi-node
-% communication (the most critical and common scenario in any HPC-like
-% application). However, his latency performance was less satisfying independently
-% from the message size, up to the point that it doubled/triplicated the time to
-% perform the same ping pong test compared to the bare-metal case.
-% In addition, the lack of official, well-structured documentation and the
-% necessity of relying only on community support made the choice of Flannel the
-% less appetitive one and the first to be discarded.
-
-% Calico, on the other side, was the solution that won the competition for the
-% multi-node test latency at the end of the message size spectrum, but it was
-% arguably the worst performer for the bandwidth test.
-% However, this superior performance in latency is significant only for huge
-% message size (greater than 1 MB), which may not be enough to justify all the
-% costs in terms of bandwidth that the plugin introduces, and the more significant
-% latency in smaller messages.
-
-% Since no detailed assumption was made about the kind of HPC workloads that will
-% be executed on the infrastructure (like distribution of message sizes
-% frequency), it can be considered wise to adopt the more balanced solution, which
-% is the Cilium CNI plugin.
-% Despite not being the best performer for a more significant number of exchanged
-% bytes, it was always the second best with a minimal gap from the winner.
-% Moreover, in the situations in which it was the best performer, which are the
-% small messages and all the cases of intra-node communication, the difference
-% concerning the bare metal case was far less than the other CNIs, which means
-% that the overhead introduced by the plugin is minimal.
-
-% In addition to that, the Cilium project has a well-structured and complete
-% documentation, which can be very useful in solving any possible issue and tuning
-% the configuration to perform even better than the out-of-the-box configuration.
-% Even if it alone is not a sufficient reason to choose a solution, it is worth
-% mentioning that together with his eBPF-based CNI plugin, the Cilium project
-% deliver also a handy command line tool, invokable via the \texttt{cilium}
-% command, which can be used to monitor, configure, and troubleshoot the network
-% effortlessly and intuitively making the management less painful and more
-% efficient.
-
-% For all these reasons, the Cilium CNI plugin was chosen as the most promising
-% candidate to be used in the infrastructure object of this thesis, and it will be
-% the CNI plugin used in the next chapter to show a case of study of a complete
-% parallel code execution on the Kubernetes cluster.
-
 In this chapter, we benchmarked different CNIs plugins with the OSU benchmark
-typically performed to validate HPC infrastructures. Flannel was the CNI plugin
-that delivered the highest bandwidth in multi-node communication (the most
-critical and common scenario in any HPC-like application), but only by a margin.
+typically performed to validate HPC infrastructures.
+Flannel was the CNI plugin that delivered the highest bandwidth in multi-node
+communication (the most critical and common scenario in any HPC-like
+application), but only by a margin.
 However, his latency performance was less satisfying regardless of the message
-size. In particular, performing the ping-pong test in the inter-node scenario
-took up to three times more time than the bare metal. In addition, the lack of
-official, well-structured documentation and the necessity of relying only on
-community support made the choice of Flannel the less appetitive one and the
-first to be discarded. On the other hand, Calico is almost at a pair in
-performance with Cillium, slightly faster in the multi-node test latency for big
-messages and slower with small messages. It has a similar bandwidth to Cillium
-for large messages and a lower bandwidth for small messages. Finally, Cilium
-showed the best performance overall. 
+size.
+In particular, performing the ping-pong test in the inter-node scenario took up
+to three times more time than the bare metal.
+In addition, the lack of official, well-structured documentation and the
+necessity of relying only on community support made the choice of Flannel the
+less appetitive one and the first to be discarded.
+On the other hand, Calico is almost at a pair in performance with Cillium,
+slightly faster in the multi-node test latency for big messages and slower with
+small messages.
+It has a similar bandwidth to Cillium for large messages and a lower bandwidth
+for small messages.
+Finally, Cilium showed the best performance overall.
 
 In addition to the performance, the Cilium project has well-structured and
 complete documentation. This documentation has proven to be helpful in solving
@@ -711,63 +517,29 @@ making the management less painful and more efficient. These combined features
 make Cillium the most promising candidate for infrastructures that want to
 handle HPC workloads in a cloud environment.
 
-% It must said that the results obtained, despite being quite encouraging,
-% highlights that an approach like the one proposed in this thesis to use a
-% container orchestrator to perform HPC-like tasks from a strictly
-% performance-focused point of view can be considered a step back from the
-% traditional systems labeled bare metal in this discussion.
-% Considering the chosen CNI plugin, Cilium, the pick of the bandwidth reached
-% 1711.73 MB/s, which is just over half of the 3006.66 MB/s obtainable by
-% scheduling the same code on the same hardware with SLURM.
-% The case of the latency is analog, where the 44.37 $\mu$s are a third more than
-% the 32.75 $\mu$s obtainable with the traditional approach, and the gap gets
-% wider as the number of exchanged bytes increases: 4588.27 $\mu$s against the
-% 1998.00 $\mu$s of the baseline for 4194304 \texttt{MPI\_CHAR}.
-
-% However, as seen in sections \ref{sec:chpt1-orchestrator} and
-% \ref{sec:chpt1-kubernetes}, the Kubernetes orchestrator brings many benefits
-% that can be worth the slight loss in performance.
-% In particular, the autoscaling feature can be handy in a scenario where the
-% workload is not constant and can vary a lot in time, overcoming the rigidity of
-% the traditional resource allocation in which the resources are asked at the
-% beginning of the job and are kept until the end, even if they are not needed
-% anymore.
-
 We must observe that, despite being quite encouraging, the obtained results
 highlight that an approach like the one proposed in this thesis to use a
 container orchestrator such as Kubernetes to perform HPC-like tasks from a
 strictly performance-focused point of view can be considered a step back from
-the traditional systems labeled bare metal in this discussion. Considering the
-chosen CNI plugin, Cilium, the pick of the bandwidth reached 1.7 GB/s, which is
-just over half of the 3.0 GB/s obtainable by scheduling the same code on the
-same hardware with SLURM. The case of the latency is analog, where the 44.37
-$\mu$s are a third more than the 32.75 $\mu$s obtainable with the traditional
-approach, and the gap gets broader as the number of exchanged bytes increases:
-4.6 ms against the 2.0 ms of the baseline for $4\mathrm{e}{6}$
-\texttt{MPI\_CHAR}.
+the traditional systems labeled bare metal in this discussion.
+Considering the chosen CNI plugin, Cilium, the pick of the bandwidth reached 1.7
+GB/s, which is just over half of the 3.0 GB/s obtainable by scheduling the same
+code on the same hardware with SLURM.
+The case of the latency is analog, where the 44.37 $\mu$s are a third more than
+the 32.75 $\mu$s obtainable with the traditional approach, and the gap gets
+broader as the number of exchanged bytes increases: 4.6 ms against the 2.0 ms of
+the baseline for $4\mathrm{e}{6}$ \texttt{MPI\_CHAR}.
 
 However, as seen in sections \ref{sec:chpt1-orchestrator} and
 \ref{sec:chpt1-kubernetes}, the Kubernetes orchestrator brings many benefits
-that can be worth the slight loss in performance. In particular, the autoscaling
-feature can be handy in a scenario where the workload is not constant and can
-vary a lot in time, overcoming the rigidity of the traditional resource
-allocation in which the resources are asked at the beginning of the job and are
-kept until the end, even if they are not needed anymore.  In the next chapter,
-chapter \ref{chpt:dask}, we will show an example of a typical workload in modern
-distributed computation frameworks, with the intent of investigating if the
-tradeoff between all the benefits the Kubernetes orchestrator brings as a
-scheduler and the slight loss in performance is worth or not.
-
-% This is a little random:
-% While in the case of an HTC (High Throughput Computing) workload, this slight
-% loss in network performance is absolutely acceptable, since the parallelization
-% is done performing multiple independent tasks, and the communication between the
-% independent worker is minimal, a more careful evaluation is needed in the cases
-% in which the communication between the workers is more frequent, and the
-% tolerance threshold for the latency is lower.
-
-% In the next chapter, chapter \ref{chpt:dask}, we will show an example of a
-% typical workload in modern distributed computation frameworks, with the intent
-% of investigating if the tradeoff between all the benefits the Kubernetes
-% orchestrator brings as a scheduler and the slight loss in performance is worth
-% or not.
+that can be worth the slight loss in performance.
+In particular, the autoscaling feature can be handy in a scenario where the
+workload is not constant and can vary a lot in time, overcoming the rigidity of
+the traditional resource allocation in which the resources are asked at the
+beginning of the job and are kept until the end, even if they are not needed
+anymore.
+In the next chapter, chapter \ref{chpt:dask}, we will show an example of a
+typical workload in modern distributed computation frameworks, with the intent
+of investigating if the tradeoff between all the benefits the Kubernetes
+orchestrator brings as a scheduler and the slight loss in performance is worth
+or not.

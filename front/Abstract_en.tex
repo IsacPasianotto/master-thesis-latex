@@ -206,8 +206,8 @@ package by netfilter. We observed a spread in the results that needed more
 investigation. Second in line is Calico, which, with the standard configuration,
 performs similarly to the last Flannel.
 Both solutions are probably bottlenecked by the encapsulation required in the
-VXLAN step they rely (Flannel) on and for using iptables for load balancing
-(Calico).
+VXLAN step they rely on (Flannel) and for using iptables and IPIP encapsulation
+for load balancing (Calico).
 In contrast, the flannel plugin is the one that allows it to reach the maximum
 bandwidth; however, in this second case, the difference between the plugins is
 almost negligible. Focusing on the second column, we see how the pod-to-pod

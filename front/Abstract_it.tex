@@ -247,8 +247,8 @@ parte del netfilter.
  Al secondo posto c'è Calico, che, con la configurazione standard,
 si comporta in modo simile all'ultimo Flannel.
 Entrambe le soluzioni sono probabilmente ostacolate dall'incapsulamento richiesto nel
-passaggio VXLAN su cui si basano (Flannel) e per l'utilizzo di iptables per le
-funzioni di loadbalancing (Calico).
+passaggio VXLAN su cui si basano (Flannel) e per l'utilizzo di iptables e
+incapsulamento IPIP per le funzioni di loadbalancing (Calico).
 Al contarario, quando si prende come riferimento la bandwidth, Flannel è quello
 che tra i vari candidati è riuscito a riportare i risultati più elevati nelle
 misuraioni.
