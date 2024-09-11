@@ -186,55 +186,44 @@ performance.
 
 Although many satisfactory results have already been obtained, there are still
 plenty of possible paths to try to exploit the underlying hardware as much as
-possible to make the SaaS solution even more appealing and competitive.
-In particular, at the time of the writing of this thesis, two main investigative
-trials are under the spotlight and are being evaluated to be implemented in the
-future.
+possible to make the SaaS solution even more appealing and competitive. In
+particular, we believe that two approaches need to be investigated: the
+\textit{Multus CNI} and the enabling of the Infiniband inside containers. 
 
-The first one is a quite recent but promising project called \textit{Multus
-  CNI} \cite{multus-presentation, multus-redhat}. This CNI has gained much
-attention in the Kubernetes community, and this is due to its main peculiarity.
-What makes Multus so interesting is that it acts as a meta-plugin for
-Kubernetes, attaching multiple virtual ethernet interfaces to every pod, each
-manageable by a different CNI plugin.
-This can be a game-changer in the network in cloud infrastructure for at least
-two distinct reasons.
-First, this configuration allows the split of the network traffic into multiple
-interfaces, each with its own configuration and rules.
-An application that shows how to take advantage of this feature is the
-possibility of separating all the traffic related to the container orchestrator,
-such as the health checks and readiness probes, from the actual communication
-the pod must perform to solve its duty.
-This can be useful to avoid the network congestion that can be caused by the
-orchestrator itself, allowing the underlying hardware to be fully exploited in
-cases (like the one of the ORFEO cluster) where more than one network interface
-is present in each node.
-The second reason why Multus can be a game-changer is the possibility of
-choosing (with annotations) which CNI plugin to use for each pod among the
-available ones.
-This can be useful to have a more fine-grained control over the network
-configuration, since results have shown that there is no absolute best CNI among
+The quite recent but promising project called \textit{Multus CNI}
+\cite{multus-presentation, multus-redhat} has gained much attention in the
+Kubernetes community, and this is due to its main peculiarity. What makes Multus
+so interesting is that it acts as a meta-plugin for Kubernetes, attaching
+multiple virtual ethernet interfaces to every pod, each manageable by a
+different CNI plugin. This can be a game-changer in the network in cloud
+infrastructure for at least two distinct reasons. First, this configuration
+allows the split of the network traffic into multiple interfaces, each with its
+own configuration and rules. An application that shows how to take advantage of
+this feature is the possibility of separating all the traffic related to the
+container orchestrator, such as the health checks and readiness probes, from the
+actual communication the pod must perform to solve its duty. This can be useful
+to avoid the network traffic caused by the orchestrator, allowing the underlying
+hardware to be fully exploited in cases where more than one network interface is
+present in each node. The second reason why Multus can be a game-changer is the
+possibility of choosing which CNI plugin to use for each pod among the available
+ones. This can be useful to have more fine-grained control over the network
+configuration since results have shown that there is no absolute best CNI among
 all the possible situations; e.g., remember that CLIUM outperforms all the other
 in both the latency and bandwidth tests, but only for small message sizes, while
-in the complementary case, Calico and Flannel beat it.
-Letting the conscious user free to pick the best CNI for his specific use case
-can be a considerable advantage and can lead to more efficient use of the
-resources.
+in the complementary case, Calico and Flannel bested it. Letting the conscious
+user free to pick the best CNI for his specific use case can be a considerable
+advantage and can lead to more efficient use of the resources.
 
-The second, very important, and promising aspect that is worth a deep
-investigation and analysis is the possibility of exploiting the Infiniband
-network that is present in the ORFEO cluster.
-Infiniband is a high-speed network technology that is widely used in the HPC
-world, and it is known for its low latency and high bandwidth.
-To do so, it is necessary to use a specific CNI plugin that can use that
-technology.
-At the time this thesis was written, the most natural choice, according to the
-author's knowledge, was the Mellanox CNI plugin.
-This plugin was developed by Mellanox, a company that is a leader in the
-Infiniband technology and was acquired by NVIDIA in 2020.
-That CNI plugin promises to be able to exploit the Infiniband network to
-guarantee the best possible performance in terms of latency and bandwidth. This
-aspect, if confirmed by benchmarks and assessments that must be done, can be a
-huge step forward in mitigating the network bottleneck since the Infiniband
-network can overcome the ethernet performance by one or two orders of magnitude
-in both the latency and the bandwidth.
+The other direction of study worth investigating and analyzing is the
+possibility of exploiting the Infiniband(IB) network that is present in the
+ORFEO cluster. IB is a high-speed network technology that is widely used in the
+HPC world, and it is known for its low latency and high bandwidth. To exploit
+the IB performances, it is necessary to use a specific CNI plugin that can use
+that technology, such as the Mellanox CNI plugin. This plugin was developed by
+Mellanox, a company that is a leader in IB technology, and was acquired by
+NVIDIA in 2020. That CNI plugin promises to be able to exploit the Infiniband
+network to guarantee the best possible performance in terms of latency and
+bandwidth. This aspect, if confirmed by benchmarks and assessments that must be
+done, can be a huge step forward in mitigating the network bottleneck since the
+Infiniband network can overcome the ethernet performance by one or two orders of
+magnitude in both the latency and the bandwidth.
