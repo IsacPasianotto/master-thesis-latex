@@ -4,183 +4,230 @@
 \label{chap:concl}
 \markboth{Conclusion}{Conclusion}
 
-\section*{To sum up}\label{sec:ack}
-\addcontentsline{toc}{section}{To sum up}
+% \section*{To sum up}\label{sec:ack}
+% \addcontentsline{toc}{section}{To sum up}
 
+% This thesis aimed to investigate the feasibility of migrating High-Performance
+% Computing (HPC) workloads to a cloud environment, leveraging the elasticity and
+% enhanced usability that cloud-based container orchestration platforms can
+% provide. This transition could offer substantial benefits to the end user of the
+% cluster (but also to the system administrator) when compared to traditional HPC
+% clusters managed by resource managers like SLURM.
+% This delivered document serves as a proof of concept, demonstrating with tests
+% and quantitative results that this transition is not unrealistic, but rather
+% feasible and achievable in practice.
+% The benchmarks and test results conducted throughout this research have shown
+% that moving HPC workloads to the cloud is becoming increasingly viable since
+% advancements in technology and software are gradually mitigating the primary
+% limitation of network performance, and a robust skeptical statement made some
+% years ago must be revised and put under question again.
 
-This thesis aimed to investigate the feasibility of migrating High-Performance
-Computing (HPC) workloads to a cloud environment, leveraging the elasticity and
-enhanced usability that cloud-based container orchestration platforms can
-provide. This transition could offer substantial benefits to the end user of the
-cluster (but also to the system administrator) when compared to traditional HPC
-clusters managed by resource managers like SLURM.
-This delivered document serves as a proof of concept, demonstrating with tests
-and quantitative results that this transition is not unrealistic, but rather
-feasible and achievable in practice.
+% Obviously, not all that glitter is gold. There are still limitations, not
+% completely solved, and in scenarios where performance is crucial and more
+% important than any improvement in the user experience, traditional HPC clusters
+% continue to guarantee more satisfactory results.
+% The main limitation, as highlighted and eviscerated in this thesis, is the drop
+% in performance in the network, which is still a critical factor and represents
+% the main bottleneck in many scenarios. A sensitive increase in latency or a
+% lower bandwidth can heavily affect the overall performance of any network-bound
+% application.
+
+% Recent advancements in networking technologies, particularly in the CNI plugins
+% sector, have sensibly mitigated this issue. However, much work is still needed
+% to make the network a non-issue in the cloud environment.
+% Knowing that due to the nature of the cloud and the intrinsic structure with
+% which an orchestrator works (i.e., isolation of the pods' network namespace), it
+% is impossible to reach the same performance of a traditional HPC cluster, the
+% hope for the future is to reach a point where that difference is so tiny that it
+% can be neglected.
+% In this context, it must be specified and underlined that the results obtained
+% are the result of measurements conducted, keeping the CNI plugin configurations
+% as the default. It is reasonable to expect a (hopefully) significant improvement
+% in properly tuning and configuring them better to fit the specific hardware
+% peculiarities and user exigences they serve.
+
+% Even as already said, there are still cases in which this transition is not
+% ready to be done yet; there exists a wide variety of scenarios in which a
+% private cloud infrastructure can be a valid substitute for a standard deployment
+% and must be taken into account and meticulously evaluated when designing a new
+% infrastructure for a research group or a company.
+% As a matter of fact, with the new container technologies that have replaced the
+% old virtual machines, the computation performances are superimposable to the
+% ones of executions on a bare-metal machine.
+% In addition, for tasks in which communication represents just a partial part of
+% the overall workload, results show how the overhead introduced by the cloud
+% infrastructure is negligible and can be neglected.
+% Cases like these are not rare, and the benefits that a cloud infrastructure can
+% provide in terms of flexibility, scalability, and usability are not to be
+% underestimated.
+% Common examples include cases where the user needs to execute a single job that
+% fits within a single node, thereby removing the requirement for inter-node
+% communication, or when performing highly independent tasks, such as running the
+% exact computation on different datasets. In such scenarios, the processes are
+% entirely isolated and do not require communication with one another.
+% In this case, more than a cluster is needed to distribute the computation and
+% scale the code horizontally, and the user can take advantage of the cloud and
+% run multiple pods in parallel, each one with its own resources and isolated from
+% the others, avoiding the wait for the resources to be freed and the job to be
+% scheduled.
+
+% In scenarios like these, a private cloud infrastructure built on platforms like
+% Kubernetes can be a robust alternative, providing a more user-friendly
+% experience with flexible resource management and deployment options typically
+% lacking in traditional HPC environments.
+% The enhanced usability and adaptability of container-based cloud platforms can
+% significantly improve the overall productivity of researchers and developers,
+% who often face barriers in utilizing HPC resources due to their complexity and
+% rigid scheduling systems.
+
+% A significant added value of this approach not stressed enough in this thesis is
+% the portability of workloads. The possibility to quickly and easily move a
+% workload from one cluster to another or a different cloud provider, thanks to a
+% standardized API and the use of containers, is a huge advantage that can not be
+% underestimated, especially in the research field where the concept of
+% reproducibility is fundamental.
+
+% Finally, it is worth mentioning that Kubernetes, and any other cloud
+% orchestrator in general, has a microservice architecture that easily allows the
+% extension of the base functionality with a dedicated operator, service, or CRD.
+% This fact can be used to meet the users' needs and to provide a more tailored
+% experience that is more satisfactory, providing an out-of-the-box, more
+% complete, and user-friendly experience.
+% To cite an example to make it more clear, at the time of writing this thesis, an
+% evaluation of the possibility and feasibility of deploying a the containerized
+% version of the \textit{Jupyter Hub} software, already available as a helm chart
+% with a dedicated operator, is ongoing.
+% This software is a multi-user environment that allows Jupyter notebooks to run
+% in a shared environment. It is widely used in the research field, especially in
+% the data science and machine learning fields.
+% Adopting it on the cluster means letting the scientists who use ORFEO to
+% interact with the cluster with a graphical user interface in their browser,
+% which is arguably more user-friendly than logging into the cluster through
+% \texttt{ssh} and a terminal.
+
+% This mentioned operator works by spawning on the fly a new pod with the Jupyter
+% preinstalled, but also many commonly used libraries if adequately configured,
+% letting then the user interact with the cluster in a more user-friendly way and
+% submitting jobs directly to the notebook or spawning dedicated pods for heavy
+% computation tasks (e.g., using Daks and its dedicated operator) without the need
+% to leave the notebook environment or the browser.
+% This is more aligned with the concept of \textit{Software as a Service} (SaaS),
+% which is the goal for the infrastructure used's maintainers.
+
+% To conclude, the results of this thesis show that for many situations, having a
+% Kubernetes cluster is a valid and more appreciable alternative to the
+% traditional HPC cluster.
+% The times are probably not yet mature enough to completely replace the
+% traditional HPC structure already deployed, at least for a \textit{``'general
+%   purposes''} cluster which aims to serve different researchers with different
+% needs;  but it is more likely to be used alongside it for different use cases.
+% It should be considered wise to keep an eye on the cloud technologies, monitor
+% the improvements and new features, and perform that kind of evaluation again in
+% the future.
+
+This thesis aimed to investigate the feasibility of migrating HPC workloads to a
+cloud environment. This transition is of high interest because it could offer
+substantial benefits to the end users of the cluster and system administrators.
+We have seen how, compared to traditional HPC clusters managed by resource
+managers like SLURM, cloud environments can offer several advantages: the native
+portability of workloads that can be quickly and easily moved from one cluster
+to another or a different service provider, thanks to a standardized API and the
+use of containers, is a huge advantage that can not be underestimated,
+especially in the research field where the concept of reproducibility is
+fundamental. Another advantage is the presence of native environments for data
+science and machine learning that can meet the users' needs and provide a more
+user-friendly experience like \textit{Jupyter Hub} that can natively interact
+with tools like Dask, presented in section XX. Furthermore, cloud solutions tend
+to offer higher resource management elasticity and enhanced flexibility in
+software deployment. In this document, we develop a proof of concept
+environment, demonstrating with tests and quantitative results that this
+transition is not unrealistic but rather feasible and achievable in practice.
+
 The benchmarks and test results conducted throughout this research have shown
 that moving HPC workloads to the cloud is becoming increasingly viable since
-advancements in technology and software are gradually mitigating the primary
-limitation of network performance, and a robust skeptical statement made some
-years ago must be revised and put under question again.
+advancements in technology and software are gradually mitigating the
+limitations. New container technologies that have replaced the virtual machines
+approach are made so that the computation performances are equal to the ones of
+executions on a bare-metal machine. The limitation that still remains is the
+network one, and we found that the drop in network performance is still a
+critical factor and represents the main bottleneck in many scenarios. In
+particular, a sensitive increase in latency or a lower bandwidth can heavily
+affect the overall performance of any network-bound application. Recent
+advancements in networking technologies, particularly in the CNI plugins sector,
+have sensibly mitigated the issue. However, much work still needs to be done to
+overcome this limitation completely. 
 
-Obviously, not all that glitter is gold. There are still limitations, not
-completely solved, and in scenarios where performance is crucial and more
-important than any improvement in the user experience, traditional HPC clusters
-continue to guarantee more satisfactory results.
-The main limitation, as highlighted and eviscerated in this thesis, is the drop
-in performance in the network, which is still a critical factor and represents
-the main bottleneck in many scenarios. A sensitive increase in latency or a
-lower bandwidth can heavily affect the overall performance of any network-bound
-application.
-
-Recent advancements in networking technologies, particularly in the CNI plugins
-sector, have sensibly mitigated this issue. However, much work is still needed
-to make the network a non-issue in the cloud environment.
 Knowing that due to the nature of the cloud and the intrinsic structure with
 which an orchestrator works (i.e., isolation of the pods' network namespace), it
 is impossible to reach the same performance of a traditional HPC cluster, the
-hope for the future is to reach a point where that difference is so tiny that it
-can be neglected.
-In this context, it must be specified and underlined that the results obtained
-are the result of measurements conducted, keeping the CNI plugin configurations
-as the default. It is reasonable to expect a (hopefully) significant improvement
-in properly tuning and configuring them better to fit the specific hardware
-peculiarities and user exigences they serve.
+hope for the future is to reach a point where that difference becomes
+negligible. In this context, it must be underlined that the results obtained are
+the result of measurements conducted, keeping the CNI plugin configurations as
+close to the default as possible to try to mimic the situation where a
+practitioner deploys a cloud-focused on services and features rather than
+performance. It is reasonable to expect a significant improvement if CNIs are
+properly tuned and configured to better fit the specific hardware peculiarities
+and user exigences they serve. 
 
-Even as already said, there are still cases in which this transition is not
-ready to be done yet; there exists a wide variety of scenarios in which a
-private cloud infrastructure can be a valid substitute for a standard deployment
-and must be taken into account and meticulously evaluated when designing a new
-infrastructure for a research group or a company.
-As a matter of fact, with the new container technologies that have replaced the
-old virtual machines, the computation performances are superimposable to the
-ones of executions on a bare-metal machine.
-In addition, for tasks in which communication represents just a partial part of
-the overall workload, results show how the overhead introduced by the cloud
-infrastructure is negligible and can be neglected.
-Cases like these are not rare, and the benefits that a cloud infrastructure can
-provide in terms of flexibility, scalability, and usability are not to be
-underestimated.
-Common examples include cases where the user needs to execute a single job that
-fits within a single node, thereby removing the requirement for inter-node
-communication, or when performing highly independent tasks, such as running the
-exact computation on different datasets. In such scenarios, the processes are
-entirely isolated and do not require communication with one another.
-In this case, more than a cluster is needed to distribute the computation and
-scale the code horizontally, and the user can take advantage of the cloud and
-run multiple pods in parallel, each one with its own resources and isolated from
-the others, avoiding the wait for the resources to be freed and the job to be
-scheduled.
-
-In scenarios like these, a private cloud infrastructure built on platforms like
-Kubernetes can be a robust alternative, providing a more user-friendly
-experience with flexible resource management and deployment options typically
-lacking in traditional HPC environments.
-The enhanced usability and adaptability of container-based cloud platforms can
-significantly improve the overall productivity of researchers and developers,
-who often face barriers in utilizing HPC resources due to their complexity and
-rigid scheduling systems.
-
-A significant added value of this approach not stressed enough in this thesis is
-the portability of workloads. The possibility to quickly and easily move a
-workload from one cluster to another or a different cloud provider, thanks to a
-standardized API and the use of containers, is a huge advantage that can not be
-underestimated, especially in the research field where the concept of
-reproducibility is fundamental.
-
-Finally, it is worth mentioning that Kubernetes, and any other cloud
-orchestrator in general, has a microservice architecture that easily allows the
-extension of the base functionality with a dedicated operator, service, or CRD.
-This fact can be used to meet the users' needs and to provide a more tailored
-experience that is more satisfactory, providing an out-of-the-box, more
-complete, and user-friendly experience.
-To cite an example to make it more clear, at the time of writing this thesis, an
-evaluation of the possibility and feasibility of deploying a the containerized
-version of the \textit{Jupyter Hub} software, already available as a helm chart
-with a dedicated operator, is ongoing.
-This software is a multi-user environment that allows Jupyter notebooks to run
-in a shared environment. It is widely used in the research field, especially in
-the data science and machine learning fields.
-Adopting it on the cluster means letting the scientists who use ORFEO to
-interact with the cluster with a graphical user interface in their browser,
-which is arguably more user-friendly than logging into the cluster through
-\texttt{ssh} and a terminal.
-
-This mentioned operator works by spawning on the fly a new pod with the Jupyter
-preinstalled, but also many commonly used libraries if adequately configured,
-letting then the user interact with the cluster in a more user-friendly way and
-submitting jobs directly to the notebook or spawning dedicated pods for heavy
-computation tasks (e.g., using Daks and its dedicated operator) without the need
-to leave the notebook environment or the browser.
-This is more aligned with the concept of \textit{Software as a Service} (SaaS),
-which is the goal for the infrastructure used's maintainers.
-
-To conclude, the results of this thesis show that for many situations, having a
-Kubernetes cluster is a valid and more appreciable alternative to the
-traditional HPC cluster.
-The times are probably not yet mature enough to completely replace the
-traditional HPC structure already deployed, at least for a \textit{``'general
-  purposes''} cluster which aims to serve different researchers with different
-needs;  but it is more likely to be used alongside it for different use cases.
-It should be considered wise to keep an eye on the cloud technologies, monitor
-the improvements and new features, and perform that kind of evaluation again in
-the future.
-
+To conclude, the results of this thesis show that for many situations,
+Kubernetes clusters are a valid alternative to the traditional HPC cluster. The
+times are not yet mature enough to completely replace the traditional HPC
+structure, as there are still performance limitations when multi-node workloads
+depend strongly on communication, but a lot of effort is being invested in
+addressing those issues. Until they are solved, in scenarios where performance
+is crucial and more important than improvements in the user experience and
+infrastructure flexibility, traditional HPC clusters continue to guarantee more
+satisfactory results. In the meantime, it is important to follow the evolution of
+cloud technologies and monitor their improvements by continuously testing their
+performance.
 
 \section*{Possible improvments}\label{sec:improvements}
 \addcontentsline{toc}{section}{Possible improvements}
 
 Although many satisfactory results have already been obtained, there are still
 plenty of possible paths to try to exploit the underlying hardware as much as
-possible to make the SaaS solution even more appealing and competitive.
-In particular, at the time of the writing of this thesis, two main investigative
-trials are under the spotlight and are being evaluated to be implemented in the
-future.
+possible to make the SaaS solution even more appealing and competitive. In
+particular, we believe that two approaches need to be investigated: the
+\textit{Multus CNI} and the enabling of the Infiniband inside containers. 
 
-The first one is a quite recent but promising project called \textit{Multus
-  CNI} \cite{multus-presentation, multus-redhat}. This CNI has gained much
-attention in the Kubernetes community, and this is due to its main peculiarity.
-What makes Multus so interesting is that it acts as a meta-plugin for
-Kubernetes, attaching multiple virtual ethernet interfaces to every pod, each
-manageable by a different CNI plugin.
-This can be a game-changer in the network in cloud infrastructure for at least
-two distinct reasons.
-First, this configuration allows the split of the network traffic into multiple
-interfaces, each with its own configuration and rules.
-An application that shows how to take advantage of this feature is the
-possibility of separating all the traffic related to the container orchestrator,
-such as the health checks and readiness probes, from the actual communication
-the pod must perform to solve its duty.
-This can be useful to avoid the network congestion that can be caused by the
-orchestrator itself, allowing the underlying hardware to be fully exploited in
-cases (like the one of the ORFEO cluster) where more than one network interface
-is present in each node.
-The second reason why Multus can be a game-changer is the possibility of
-choosing (with annotations) which CNI plugin to use for each pod among the
-available ones.
-This can be useful to have a more fine-grained control over the network
-configuration, since results have shown that there is no absolute best CNI among
+The quite recent but promising project called \textit{Multus CNI}
+\cite{multus-presentation, multus-redhat} has gained much attention in the
+Kubernetes community, and this is due to its main peculiarity. What makes Multus
+so interesting is that it acts as a meta-plugin for Kubernetes, attaching
+multiple virtual ethernet interfaces to every pod, each manageable by a
+different CNI plugin. This can be a game-changer in the network in cloud
+infrastructure for at least two distinct reasons. First, this configuration
+allows the split of the network traffic into multiple interfaces, each with its
+own configuration and rules. An application that shows how to take advantage of
+this feature is the possibility of separating all the traffic related to the
+container orchestrator, such as the health checks and readiness probes, from the
+actual communication the pod must perform to solve its duty. This can be useful
+to avoid the network traffic caused by the orchestrator, allowing the underlying
+hardware to be fully exploited in cases where more than one network interface is
+present in each node. The second reason why Multus can be a game-changer is the
+possibility of choosing which CNI plugin to use for each pod among the available
+ones. This can be useful to have more fine-grained control over the network
+configuration since results have shown that there is no absolute best CNI among
 all the possible situations; e.g., remember that CLIUM outperforms all the other
 in both the latency and bandwidth tests, but only for small message sizes, while
-in the complementary case, Calico and Flannel beat it.
-Letting the conscious user free to pick the best CNI for his specific use case
-can be a considerable advantage and can lead to more efficient use of the
-resources.
+in the complementary case, Calico and Flannel bested it. Letting the conscious
+user free to pick the best CNI for his specific use case can be a considerable
+advantage and can lead to more efficient use of the resources.
 
-The second, very important, and promising aspect that is worth a deep
-investigation and analysis is the possibility of exploiting the Infiniband
-network that is present in the ORFEO cluster.
-Infiniband is a high-speed network technology that is widely used in the HPC
-world, and it is known for its low latency and high bandwidth.
-To do so, it is necessary to use a specific CNI plugin that can use that
-technology.
-At the time this thesis was written, the most natural choice, according to the
-author's knowledge, was the Mellanox CNI plugin.
-This plugin was developed by Mellanox, a company that is a leader in the
-Infiniband technology and was acquired by NVIDIA in 2020.
-That CNI plugin promises to be able to exploit the Infiniband network to
-guarantee the best possible performance in terms of latency and bandwidth. This
-aspect, if confirmed by benchmarks and assessments that must be done, can be a
-huge step forward in mitigating the network bottleneck since the Infiniband
-network can overcome the ethernet performance by one or two orders of magnitude
-in both the latency and the bandwidth.
+The other direction of study worth investigating and analyzing is the
+possibility of exploiting the Infiniband(IB) network that is present in the
+ORFEO cluster. IB is a high-speed network technology that is widely used in the
+HPC world, and it is known for its low latency and high bandwidth. To exploit
+the IB performances, it is necessary to use a specific CNI plugin that can use
+that technology, such as the Mellanox CNI plugin. This plugin was developed by
+Mellanox, a company that is a leader in IB technology, and was acquired by
+NVIDIA in 2020. That CNI plugin promises to be able to exploit the Infiniband
+network to guarantee the best possible performance in terms of latency and
+bandwidth. This aspect, if confirmed by benchmarks and assessments that must be
+done, can be a huge step forward in mitigating the network bottleneck since the
+Infiniband network can overcome the ethernet performance by one or two orders of
+magnitude in both the latency and the bandwidth.
+
+The author acknowledge the AREA Science Park supercomputing platform ORFEO made
+available for conducting the research reported in this thesis and the technical
+support of the Laboratory of Data Engineering staff.
