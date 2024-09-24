@@ -2,69 +2,26 @@
 
 * Index
 
- * [[./front/Abstract_en.tex][*Abstract - english*]]
+Abstracts:
+ * [[./front/Abstract_en.tex][Abstract - english]]
+ * [[./front/Abstract_it.tex][Abstract - italiano]]
+Chapters:
+ * [[./front/Introduction.tex][Introduction]]
+ * [[./main/Chapter1.tex][Chapter 1: The cloud computing setting]]
+ * [[./main/Chapter2.tex][Chapter 2: CNIs]]
+ * [[./main/Chapter3.tex][Chapter 3: CNIs comparison and assessment]]
+ * [[./main/Chapter4.tex][Chapter 4: Dask: a case of study for HPC in the cloud]]
+ * [[./back/Conclusion.tex][Conclusion]]
+Appendices:
+ * [[./back/Appendix1.tex][Appendix A: About the network performance benchmark]]
+ * [[./back/Appendix2.tex][Appendix B: Latency and bandwidth performance: the results]]
+ * [[Appendix C: Dask benchmark, the results]]
 
-- [X] ~Abstract~ (eng + ita)
-  - [X] *TODO*: riscrivere la parte di commento ai risultati ottenuti
-  - [X] Traduzione in italiano
-- [X] ~Introduzione~ - 3 pag.:
-  * Review dello stato dell'arte - 3 pag.
-  * Dichiarazione degli intenti: portare l'hpc nel cloud
-  * Obiettivo in termini NIST: SaaS in cloud privato
-  * Letteratura in questo senso? chi ha già fatto cosa di simile?
-- [X] ~Chpt1: Cloud Computing~ *12 pag.*:
-  * [X] Container and VMs (4 pag.)
-    - perchè i container ci piacciono
-    - portabilità e spectrum solution
-    - performance equivalenti al bare-metal
-  * [X] Orchestrator (5 pag.)
-    - Quali sono le belle features che ci da un orchestrator?  -> Scalability, availability, ...
-  * [X] Kubernetes (3 pag.)
-    - Come mai abbiamo scelto kubernetes?
-    - Docker swarm no perchè... open stack no perchè ...
-    - Scelta più popolare, community attiva
-    - Standard implementato da tutti
-- [X] ~Chpt2: CNI~ - *12 pag.*:
-  * [X] Confronto con l'HPC (2 pag.)
-    - Anche nell'HPC il bottleneck è la comunicazione
-  * [X] Come funziona la comunicazione node-to-node? (1 pag.)
-    - Ogni CNI inserisce una VETH sul pod
-    - Fa le modifiche necessarie all'host per far sì che tutto funzioni bene
-  * [X] Le CNI utilizzate: dettagli (3+3+3=9 pag).
-    - [X] /calico/
-    - [X] /flannel/
-    - [X] /cilium/
-- [X] ~Chpt3: CNI comparison~ - *8 pag.*:
-  * [X] Metodologia (3 pag.)
-    - Come ho performato i test?
-    - spawno un pod per nodo
-    - ogni pod ha un container con gli eseguibili mpi
-    - usato l'MPI operator
-    - Benchmark utilizzato: l'OSU benchmark
-  * [X] Misurazioni (3 pag.)
-    - Caratteristiche tecniche dei nodi
-    - Caratteristiche tecniche del cluster kubernetes
-    - Come abbiamo installato tutto
-    - Abbiamo fatto runnare tutto su ethernet per poterlo comparare
-    - Risultati
-  * [X] Commenti (2 pag.)
-    - Commenti ai risultati
-- [X] ~Chpt4: Dask, a case of study~ - *13 pag.*:
-  * [X] What is dask (4 pag.)
-    - presentarlo come tool che ci permette di exploitare il multi-node anche su kubernetes
-    - Libreria python molto flessibile e apprezzata per il calcolo parallelo
-    - Interessante /case of study/ per dimostrare che fare HPC nel cloud è possibile
-  * [X] Il nostro benchmark (5 pag.)
-    - Simulazione di operazioni comuni su DF e Array
-    - Scritto perchè non esiste nulla per benchmarkare l'infrastruttura
-    - -> Come lo abbiamo eseguito sui THIN?
-    - -> Come lo abbiamo eseguito su Kubernetes?
-  * [X] Risultati (4 pag.)
-    - Commenti
-- [X] ~Conclusions~ - 4 pag.:
-  * [X] To sum up (2 pag.)
-    - è possibile portare l'HPC in cloud? Sì
-    - Limiti sulla rete
-  * [X] Possible improvements (2 pag.)
-    - Mellanox per sfruttare l'infiniband?
-    - Multus CNI per avere più CNI in un colpo solo
+
+To compile the code, just use the [[./compile.sh][./compile.sh]] script (it will require ~pdflatex~ to be installed).
+
+
+*** Credits
+
+The LaTeX template used in this work is an adaptation of the one founded [[https://sites.units.it/carrato/didatt/info_laureandi/LaTeX/][university website]] created by Stefano Bianchi (2014) and edited by Tommaso Fonda (2023).
+
