@@ -1,8 +1,8 @@
 #+title: New approaches in scientific computing: the design of a cloud-ready HPC infrastructure
 
-/deadline upload tesi:/ *12 settembre, ore 13:00*
+* Index
 
-* Road map
+ * [[./front/Abstract_en.tex][*Abstract - english*]]
 
 - [X] ~Abstract~ (eng + ita)
   - [X] *TODO*: riscrivere la parte di commento ai risultati ottenuti
